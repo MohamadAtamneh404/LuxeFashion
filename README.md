@@ -1,5 +1,3 @@
-
-
 <div align="center">
   <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=200&section=header&text=LuxeFashion&fontSize=80&fontAlignY=35&desc=Modern%20E-Commerce%20Platform&descAlignY=55&descAlign=50" />
 </div>
@@ -17,11 +15,9 @@
 
 ## 🎥 Video Demonstration
 
-*(<video src="https://github.com/user-attachments/assets/5c6be06a-07ab-4b48-b988-e850cb95cf3e" controls width="800"></video>).*
-
-
-
-
+<div align="center">
+  <video src="https://github.com/user-attachments/assets/5c6be06a-07ab-4b48-b988-e850cb95cf3e" controls width="800"></video>
+</div>
 
 ---
 
@@ -60,20 +56,22 @@ graph TD
 - **Node.js** (v18+)
 - **npm** or **yarn**
 
-### 1️⃣ Installation
-Clone the repository and install dependencies:
+### 1️⃣ Backend Setup
+Open a terminal and start the server:
 ```bash
-git clone https://github.com/MohamadAtamneh404/LuxeFashion.git
-cd LuxeFashion
+cd backend
 npm install
-```
-
-### 2️⃣ Run Development Server
-Start the local development server:
-```bash
 npm run dev
 ```
-The application will be running at `http://localhost:3000` (or your configured port).
+
+### 2️⃣ Frontend Setup
+Open a second terminal window and start the client:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+The application will be running at `http://localhost:3000` (or `http://localhost:5173` depending on your setup).
 
 ---
 
