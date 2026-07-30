@@ -17,7 +17,7 @@
 
 ## 🎥 Video Demonstration
 
-*(https://github.com/user-attachments/assets/5c6be06a-07ab-4b48-b988-e850cb95cf3e).*
+*(<video src="https://github.com/user-attachments/assets/5c6be06a-07ab-4b48-b988-e850cb95cf3e" controls width="800"></video>).*
 
 
 
