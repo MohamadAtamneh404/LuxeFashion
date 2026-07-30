@@ -1,3 +1,5 @@
+
+
 <div align="center">
   <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=200&section=header&text=LuxeFashion&fontSize=80&fontAlignY=35&desc=Modern%20E-Commerce%20Platform&descAlignY=55&descAlign=50" />
 </div>
@@ -15,7 +17,11 @@
 
 ## 🎥 Video Demonstration
 
-*(Drag and drop your `.mp4` or `.mov` video file right here in the GitHub editor! GitHub will automatically upload it and turn it into a playable video player).*
+*(https://github.com/user-attachments/assets/5c6be06a-07ab-4b48-b988-e850cb95cf3e).*
+
+
+
+
 
 ---
 
