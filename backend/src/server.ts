@@ -33,13 +33,29 @@ const PORT = process.env.PORT || 4001;
 // Stripe's webhook signature check needs the RAW request body — mount it before express.json().
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 
-// CORS — only the configured frontend origin(s) may call the API cross-origin.
-// (Same-origin calls via the Vite dev proxy are unaffected.)
+// CORS — allow configured frontend origin(s), Vercel deployments, and local dev
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
-app.use(cors({ origin: allowedOrigins }));
+
+if (process.env.VERCEL_URL) {
+  allowedOrigins.push(`https://${process.env.VERCEL_URL}`);
+}
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      process.env.NODE_ENV !== 'production'
+    ) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  }
+}));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -100,8 +116,8 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-// Don't bind a port when imported by tests (supertest drives the app in-process).
-if (process.env.NODE_ENV !== 'test') {
+// Don't bind a port when imported by tests or running in a serverless environment (e.g. Vercel)
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`Backend server running on port ${PORT}`);
     console.log(`Health check: http://localhost:${PORT}/api/health`);

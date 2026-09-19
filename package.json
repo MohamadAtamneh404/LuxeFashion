@@ -1,8 +1,11 @@
 {
-  "name": "luxefashion-e2e",
+  "name": "luxefashion",
   "private": true,
-  "description": "End-to-end tests for LuxeFashion (Playwright). Unit tests live in frontend/ and backend/.",
+  "description": "LuxeFashion - Modern E-Commerce Platform",
   "scripts": {
+    "build": "npm --prefix frontend run build",
+    "build:all": "npm --prefix frontend run build && npm --prefix backend run build",
+    "install:all": "npm --prefix frontend install && npm --prefix backend install",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
