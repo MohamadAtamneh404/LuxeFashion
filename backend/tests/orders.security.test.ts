@@ -22,16 +22,18 @@ vi.mock('../src/config/firebase', () => ({
     collection: (name: string) => {
       if (name === 'orders') {
         return {
-          where: (_field: string, _op: string, value: string) => ({
-            orderBy: () => ({
-              get: async () => ({
-                docs: ORDERS.filter((o) => o.userId === value).map((o) => ({
-                  id: o.id,
-                  data: () => ({ ...o }),
-                })),
-              }),
-            }),
-          }),
+          where: (_field: string, _op: string, value: string) => {
+            const getDocs = async () => ({
+              docs: ORDERS.filter((o) => o.userId === value).map((o) => ({
+                id: o.id,
+                data: () => ({ ...o }),
+              })),
+            });
+            return {
+              get: getDocs,
+              orderBy: () => ({ get: getDocs }),
+            };
+          },
           add: async (doc: any) => {
             const id = 'new-order';
             return { id, get: async () => ({ id, data: () => doc }) };

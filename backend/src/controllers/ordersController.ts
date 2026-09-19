@@ -109,8 +109,10 @@ export const getOrdersByUser = async (req: Request, res: Response) => {
     const { userId } = req.params;
     if (!userId) return res.status(400).json({ error: 'userId is required' });
 
-    const snapshot = await db.collection(COLLECTION).where('userId', '==', userId).orderBy('createdAt', 'desc').get();
-    const orders = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const snapshot = await db.collection(COLLECTION).where('userId', '==', userId).get();
+    const orders = snapshot.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .sort((a: any, b: any) => (b.createdAt || '').localeCompare(a.createdAt || ''));
     res.json(orders);
   } catch (error: any) {
     console.error('Error getting orders:', error);

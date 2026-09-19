@@ -8,12 +8,23 @@ function initFirebase() {
   if (admin.apps.length > 0) return;
 
   let serviceAccount: any;
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_PATH && fs.existsSync(process.env.FIREBASE_SERVICE_ACCOUNT_PATH)) {
-    serviceAccount = JSON.parse(fs.readFileSync(process.env.FIREBASE_SERVICE_ACCOUNT_PATH, 'utf8'));
-  } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-  } else if (fs.existsSync(serviceAccountPath)) {
-    serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+  const rawPaths: (string | undefined)[] = [
+    process.env.FIREBASE_SERVICE_ACCOUNT_PATH,
+    path.join(__dirname, 'service-account.json'),
+    path.resolve(__dirname, '../../src/config/service-account.json'),
+    path.join(process.cwd(), 'src/config/service-account.json'),
+    path.join(process.cwd(), 'backend/src/config/service-account.json'),
+  ];
+  const candidatePaths = rawPaths.filter((p): p is string => typeof p === 'string' && fs.existsSync(p));
+
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    } catch (e) {
+      console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT env var:', e);
+    }
+  } else if (candidatePaths.length > 0) {
+    serviceAccount = JSON.parse(fs.readFileSync(candidatePaths[0], 'utf8'));
   }
 
   if (serviceAccount) {
