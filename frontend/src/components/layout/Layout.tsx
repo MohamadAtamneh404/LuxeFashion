@@ -247,118 +247,120 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             </button>
           </div>
         </div>
+      </header>
 
-        {/* Mobile menu full-screen overlay */}
-        {menuOpen && (
-          <div className="md:hidden fixed inset-0 z-[60] bg-white flex flex-col justify-between overflow-y-auto animate-fade-in">
-            {/* Mobile Header Bar */}
-            <div className="px-6 sm:px-8 py-4 sm:py-5 border-b border-border flex items-center justify-between">
-              <Link
-                to="/"
-                onClick={() => setMenuOpen(false)}
-                className="text-xl sm:text-2xl tracking-tight select-none text-ink font-display"
-              >
-                LuxeFashion<sup className="text-xs align-super">®</sup>
-              </Link>
+      {/* ── Mobile menu full-screen overlay ─────────────────────────────────
+           Rendered OUTSIDE <header> so its z-index resolves against the document
+           root stacking context, not the header's sticky z-50 context.  ───── */}
+      {menuOpen && (
+        <div className="md:hidden fixed inset-0 z-[9999] bg-white flex flex-col justify-between overflow-y-auto animate-fade-in">
+          {/* Mobile Header Bar */}
+          <div className="px-6 sm:px-8 py-4 sm:py-5 border-b border-border flex items-center justify-between">
+            <Link
+              to="/"
+              onClick={() => setMenuOpen(false)}
+              className="text-xl sm:text-2xl tracking-tight select-none text-ink font-display"
+            >
+              LuxeFashion<sup className="text-xs align-super">®</sup>
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMenuOpen(false)}
+              className="text-ink p-2 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-2 focus-visible:outline-ink"
+              aria-label="Close menu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Menu Links */}
+          <div className="px-6 sm:px-8 py-6 flex-1">
+            {/* Shop Accordion / Dropdown */}
+            <div className="mb-6">
               <button
                 type="button"
-                onClick={() => setMenuOpen(false)}
-                className="text-ink p-2 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-2 focus-visible:outline-ink"
-                aria-label="Close menu"
+                onClick={() => setMobileShopOpen(!mobileShopOpen)}
+                className="w-full flex items-center justify-between text-3xl text-ink font-display py-2"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                <span>Shop</span>
+                <svg className={`w-5 h-5 text-muted transition-transform duration-200 ${mobileShopOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
+
+              {mobileShopOpen && (
+                <div className="pl-3 mt-3 space-y-3 border-l-2 border-border font-body">
+                  {SHOP_CATEGORIES.map(({ label, to }) => (
+                    <Link
+                      key={label}
+                      to={to}
+                      onClick={() => setMenuOpen(false)}
+                      className="block text-base text-muted hover:text-ink transition-colors py-1"
+                    >
+                      {label}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Menu Links */}
-            <div className="px-6 sm:px-8 py-6 flex-1">
-              {/* Shop Accordion / Dropdown */}
-              <div className="mb-6">
-                <button
-                  type="button"
-                  onClick={() => setMobileShopOpen(!mobileShopOpen)}
-                  className="w-full flex items-center justify-between text-3xl text-ink font-display py-2"
-                >
-                  <span>Shop</span>
-                  <svg className={`w-5 h-5 text-muted transition-transform duration-200 ${mobileShopOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-
-                {mobileShopOpen && (
-                  <div className="pl-3 mt-3 space-y-3 border-l-2 border-border font-body">
-                    {SHOP_CATEGORIES.map(({ label, to }) => (
-                      <Link
-                        key={label}
-                        to={to}
-                        onClick={() => setMenuOpen(false)}
-                        className="block text-base text-muted hover:text-ink transition-colors py-1"
-                      >
-                        {label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-4">
-                <Link
-                  to="/#collections"
-                  onClick={() => setMenuOpen(false)}
-                  className="block text-3xl text-ink font-display py-2 hover:opacity-70 transition-opacity"
-                >
-                  Collections
-                </Link>
-                <Link
-                  to="/#story"
-                  onClick={() => setMenuOpen(false)}
-                  className="block text-3xl text-ink font-display py-2 hover:opacity-70 transition-opacity"
-                >
-                  Our Story
-                </Link>
-              </div>
-            </div>
-
-            {/* Bottom Actions */}
-            <div className="px-8 py-8 border-t border-border bg-surface/40 flex flex-col gap-5">
-              <div className="grid grid-cols-2 gap-4">
-                <Link
-                  to="/account"
-                  onClick={() => setMenuOpen(false)}
-                  className="text-xs uppercase tracking-widest text-ink hover:opacity-60 transition-opacity font-body font-medium"
-                >
-                  Account
-                </Link>
-                <Link
-                  to="/wishlist"
-                  onClick={() => setMenuOpen(false)}
-                  className="text-xs uppercase tracking-widest text-ink hover:opacity-60 transition-opacity font-body font-medium"
-                >
-                  Wishlist ({wishlistCount})
-                </Link>
-                {isAdmin && (
-                  <Link
-                    to="/admin"
-                    onClick={() => setMenuOpen(false)}
-                    className="text-xs uppercase tracking-widest text-ink hover:opacity-60 transition-opacity font-body font-medium"
-                  >
-                    Admin Dashboard
-                  </Link>
-                )}
-              </div>
+            <div className="space-y-4">
               <Link
-                to="/shop?sort=new"
+                to="/#collections"
                 onClick={() => setMenuOpen(false)}
-                className="btn-primary w-full py-4 text-center mt-2"
+                className="block text-3xl text-ink font-display py-2 hover:opacity-70 transition-opacity"
               >
-                New Arrivals
+                Collections
+              </Link>
+              <Link
+                to="/#story"
+                onClick={() => setMenuOpen(false)}
+                className="block text-3xl text-ink font-display py-2 hover:opacity-70 transition-opacity"
+              >
+                Our Story
               </Link>
             </div>
           </div>
-        )}
-      </header>
+
+          {/* Bottom Actions */}
+          <div className="px-8 py-8 border-t border-border bg-surface/40 flex flex-col gap-5">
+            <div className="grid grid-cols-2 gap-4">
+              <Link
+                to="/account"
+                onClick={() => setMenuOpen(false)}
+                className="text-xs uppercase tracking-widest text-ink hover:opacity-60 transition-opacity font-body font-medium"
+              >
+                Account
+              </Link>
+              <Link
+                to="/wishlist"
+                onClick={() => setMenuOpen(false)}
+                className="text-xs uppercase tracking-widest text-ink hover:opacity-60 transition-opacity font-body font-medium"
+              >
+                Wishlist ({wishlistCount})
+              </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-xs uppercase tracking-widest text-ink hover:opacity-60 transition-opacity font-body font-medium"
+                >
+                  Admin Dashboard
+                </Link>
+              )}
+            </div>
+            <Link
+              to="/shop?sort=new"
+              onClick={() => setMenuOpen(false)}
+              className="btn-primary w-full py-4 text-center mt-2"
+            >
+              New Arrivals
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* ── Page content ───────────────────────────────────────────────────── */}
       <main id="main-content" className="flex-grow">{children}</main>
