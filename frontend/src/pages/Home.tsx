@@ -94,13 +94,23 @@ function Home() {
             </Link>
           </div>
           
-          <div className="flex-1 w-full relative hidden md:block">
+          <div className="flex-1 w-full relative mt-12 md:mt-0">
             {/* Editorial imagery stack */}
-            <div className="aspect-[4/5] bg-border rounded-2xl overflow-hidden relative w-[80%] ml-auto shadow-2xl">
-              <img src="https://images.unsplash.com/photo-1550614000-4b95d466f272?q=80&w=800&auto=format&fit=crop" alt="Fabric detail" className="w-full h-full object-cover" loading="lazy" />
+            <div className="aspect-[4/5] bg-border rounded-2xl overflow-hidden relative w-[85%] md:w-[80%] ml-auto shadow-2xl">
+              <img
+                src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=800&auto=format&fit=crop"
+                alt="Fabric detail"
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
             </div>
-            <div className="aspect-square bg-border rounded-2xl overflow-hidden absolute bottom-[-10%] left-0 w-[45%] shadow-xl border-4 border-surface">
-              <img src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=800&auto=format&fit=crop" alt="Shirt detail" className="w-full h-full object-cover" loading="lazy" />
+            <div className="aspect-square bg-border rounded-2xl overflow-hidden absolute bottom-[-8%] left-0 w-[48%] md:w-[45%] shadow-xl border-4 border-surface">
+              <img
+                src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=800&auto=format&fit=crop"
+                alt="Shirt detail"
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
             </div>
           </div>
         </div>

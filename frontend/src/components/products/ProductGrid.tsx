@@ -37,6 +37,57 @@ const isNewProduct = (p: Product): boolean => {
   return Number.isFinite(created) && Date.now() - created < NEW_WINDOW_MS;
 };
 
+function QuickAddButton({ sizes, onSelectSize }: { sizes: string[]; onSelectSize: (size: string) => void }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
+    <div
+      tabIndex={0}
+      onClick={() => setMobileOpen(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+          setMobileOpen(false);
+        }
+      }}
+      className={`w-full h-10 border-[1.5px] border-ink text-ink flex items-center justify-center text-sm font-medium transition-colors cursor-pointer relative overflow-hidden group/quickadd rounded-full ${
+        mobileOpen ? 'bg-ink text-surface' : 'lg:hover:bg-ink lg:hover:text-surface'
+      }`}
+    >
+      <span
+        className={`absolute inset-0 flex items-center justify-center transition-transform duration-300 pointer-events-none ${
+          mobileOpen ? '-translate-y-full' : 'lg:group-hover/quickadd:-translate-y-full'
+        }`}
+      >
+        Quick Add
+      </span>
+
+      <div
+        className={`absolute inset-0 flex items-center justify-center gap-1 bg-ink text-surface transition-transform duration-300 px-2 ${
+          mobileOpen ? 'translate-y-0' : 'translate-y-full lg:group-hover/quickadd:translate-y-0'
+        }`}
+      >
+        {sizes.slice(0, 4).map((size) => (
+          <button
+            key={size}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onSelectSize(size);
+              setMobileOpen(false);
+            }}
+            className="text-xs px-2.5 py-1.5 rounded hover:bg-white/20 active:bg-white/30 transition-colors focus:outline-none focus:bg-white/20"
+            style={{ fontFamily: 'var(--font-body)' }}
+          >
+            {size}
+          </button>
+        ))}
+        {sizes.length > 4 && <span className="text-xs px-1 pointer-events-none">...</span>}
+      </div>
+    </div>
+  );
+}
+
 const ProductGrid = ({ activeSort = 'newest', activeFilters, query }: ProductGridProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading]   = useState(true);
@@ -245,38 +296,19 @@ const ProductGrid = ({ activeSort = 'newest', activeFilters, query }: ProductGri
             </div>
 
             <div className="mt-auto pt-2 relative">
-              {/* Default state button */}
-              <div tabIndex={0} className="w-full h-10 border-[1.5px] border-ink text-ink flex items-center justify-center text-sm font-medium transition-colors lg:group-hover:bg-ink lg:group-hover:text-surface focus-within:bg-ink focus-within:text-surface rounded-full cursor-pointer relative overflow-hidden group/quickadd">
-                <span className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover:-translate-y-full group-focus-within/quickadd:-translate-y-full pointer-events-none">
-                  Quick Add
-                </span>
-                
-                {/* Size selector reveals on hover inside the button footprint */}
-                <div className="absolute inset-0 flex items-center justify-center gap-1 bg-ink text-surface translate-y-full transition-transform duration-300 lg:group-hover:translate-y-0 group-focus-within/quickadd:translate-y-0 px-2">
-                  {product.sizes.slice(0, 4).map((size) => (
-                    <button
-                      key={size}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        addToCart({
-                          productId: product.id,
-                          name: product.name,
-                          price: product.price,
-                          image: product.image,
-                          quantity: 1,
-                          size: size,
-                        });
-                      }}
-                      className="text-xs px-2 py-1.5 rounded hover:bg-white/20 transition-colors focus:outline-none focus:bg-white/20"
-                      style={{ fontFamily: 'var(--font-body)' }}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                  {product.sizes.length > 4 && <span className="text-xs px-1 pointer-events-none">...</span>}
-                </div>
-              </div>
+              <QuickAddButton
+                sizes={product.sizes}
+                onSelectSize={(size) => {
+                  addToCart({
+                    productId: product.id,
+                    name: product.name,
+                    price: product.price,
+                    image: product.image,
+                    quantity: 1,
+                    size: size,
+                  });
+                }}
+              />
             </div>
           </div>
         </div>

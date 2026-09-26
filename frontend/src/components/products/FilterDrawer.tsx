@@ -54,7 +54,7 @@ const FilterDrawer = ({
         aria-hidden="true"
       />
       <div 
-        className="fixed top-0 right-0 h-full w-full max-w-md bg-surface shadow-2xl z-[101] flex flex-col animate-in slide-in-from-right duration-300"
+        className="fixed inset-y-0 right-0 h-full h-[100dvh] w-full max-w-md bg-surface shadow-2xl z-[101] flex flex-col animate-in slide-in-from-right duration-300"
         role="dialog"
         aria-modal="true"
         aria-label="Filter and Sort"

@@ -6,12 +6,14 @@ import { useWishlist } from '../../contexts/WishlistContext';
 import { subscribeNewsletter } from '../../services/api';
 import SearchBar from './SearchBar';
 
-// Only links whose targets actually exist — the old #lookbook / #journal
-// anchors pointed at nothing, which made those buttons dead.
-const NAV_LINKS = [
-  { label: 'Shop',        to: '/shop' },
-  { label: 'Collections', to: '/#collections' },
-  { label: 'Our Story',   to: '/#story' },
+
+
+const SHOP_CATEGORIES = [
+  { label: 'All Collections', to: '/shop' },
+  { label: 'Men', to: '/shop/men' },
+  { label: 'Women', to: '/shop/women' },
+  { label: 'Accessories', to: '/shop/accessories' },
+  { label: 'Footwear', to: '/shop/footwear' },
 ];
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -21,6 +23,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const headerRef = useRef<HTMLElement>(null);
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [shopDropdownOpen, setShopDropdownOpen] = useState(false);
+  const [mobileShopOpen, setMobileShopOpen] = useState(true);
 
   // Newsletter signup (footer) — posts to /api/newsletter and shows feedback.
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -119,25 +123,116 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
           {/* Centre links */}
           <nav className="hidden md:flex items-center gap-8">
-            {NAV_LINKS.map(({ label, to }) => (
+            {/* Shop Dropdown */}
+            <div
+              className="relative py-2"
+              onMouseEnter={() => setShopDropdownOpen(true)}
+              onMouseLeave={() => setShopDropdownOpen(false)}
+            >
               <Link
-                key={label}
-                to={to}
-                className="text-sm text-muted hover:text-ink transition-colors"
+                to="/shop"
+                className="text-sm text-muted hover:text-ink transition-colors flex items-center gap-1.5"
                 style={{ fontFamily: 'var(--font-body)' }}
               >
-                {label}
+                <span>Shop</span>
+                <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${shopDropdownOpen ? 'rotate-180 text-ink' : 'text-muted'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </Link>
-            ))}
+
+              {/* Dropdown Menu */}
+              <div
+                className={`absolute top-full -left-4 w-48 bg-white border border-border rounded-2xl shadow-xl py-2 z-50 transition-all duration-200 ${
+                  shopDropdownOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'
+                }`}
+              >
+                {SHOP_CATEGORIES.map(({ label, to }) => (
+                  <Link
+                    key={label}
+                    to={to}
+                    onClick={() => setShopDropdownOpen(false)}
+                    className="block px-5 py-2.5 text-xs text-muted hover:text-ink hover:bg-surface transition-colors font-body"
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <Link
+              to="/#collections"
+              className="text-sm text-muted hover:text-ink transition-colors"
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
+              Collections
+            </Link>
+            <Link
+              to="/#story"
+              className="text-sm text-muted hover:text-ink transition-colors"
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
+              Our Story
+            </Link>
           </nav>
 
           {/* Right actions */}
-          <div className="flex items-center gap-5">
-            {/* Mobile menu toggle */}
+          <div className="flex items-center gap-4 sm:gap-5">
+            {/* Search */}
+            <SearchBar />
+
+            {/* Wishlist */}
+            <Link to="/wishlist" className="relative text-ink hover:opacity-70 transition-opacity p-1" aria-label="View wishlist">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-ink text-white text-[10px] font-semibold
+                  min-w-4 h-4 px-1 rounded-full flex items-center justify-center leading-none">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Cart icon */}
+            <Link to="/cart" className="relative text-ink hover:opacity-70 transition-opacity p-1" aria-label="View cart">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              {itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-ink text-white text-[10px] font-semibold
+                  min-w-4 h-4 px-1 rounded-full flex items-center justify-center leading-none">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
+
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="hidden md:inline-block text-sm text-muted hover:text-ink transition-colors font-body"
+              >
+                Admin
+              </Link>
+            )}
+            <Link
+              to="/account"
+              className="hidden md:inline-block text-sm text-muted hover:text-ink transition-colors font-body"
+            >
+              Account
+            </Link>
+
+            {/* CTA */}
+            <Link to="/shop?sort=new" className="btn-primary !py-2 !px-5 !text-sm hidden md:inline-flex">
+              New Arrivals
+            </Link>
+
+            {/* Mobile menu toggle (44x44px touch target) */}
             <button
               type="button"
-              className="md:hidden text-ink hover:opacity-70 transition-opacity"
-              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              className="md:hidden text-ink hover:opacity-70 transition-opacity p-2 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-2 focus-visible:outline-ink"
+              aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((open) => !open)}
             >
@@ -151,102 +246,114 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 </svg>
               )}
             </button>
-            {isAdmin && (
-              <Link
-                to="/admin"
-                className="text-sm text-muted hover:text-ink transition-colors"
-                style={{ fontFamily: 'var(--font-body)' }}
-              >
-                Admin
-              </Link>
-            )}
-            <Link
-              to="/account"
-              className="text-sm text-muted hover:text-ink transition-colors"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
-              Account
-            </Link>
-
-            {/* Search */}
-            <SearchBar />
-
-            {/* Wishlist */}
-            <Link to="/wishlist" className="relative text-ink hover:opacity-70 transition-opacity" aria-label="View wishlist">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-              {wishlistCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-ink text-white text-[10px] font-semibold
-                  min-w-4 h-4 px-1 rounded-full flex items-center justify-center leading-none">
-                  {wishlistCount}
-                </span>
-              )}
-            </Link>
-
-            {/* Cart icon */}
-            <Link to="/cart" className="relative text-ink hover:opacity-70 transition-opacity" aria-label="View cart">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-              {itemCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-ink text-white text-[10px] font-semibold
-                  min-w-4 h-4 px-1 rounded-full flex items-center justify-center leading-none">
-                  {itemCount}
-                </span>
-              )}
-            </Link>
-
-            {/* CTA */}
-            <Link to="/shop?sort=new" className="btn-primary !py-2 !px-5 !text-sm hidden md:inline-flex">
-              New Arrivals
-            </Link>
           </div>
         </div>
 
         {/* Mobile menu full-screen overlay */}
         {menuOpen && (
-          <div className="md:hidden fixed inset-0 top-[73px] z-40 bg-white flex flex-col justify-between px-8 py-10 animate-fade-in overflow-y-auto">
-            <nav className="flex flex-col gap-8">
-              {NAV_LINKS.map(({ label, to }) => (
-                <Link
-                  key={label}
-                  to={to}
-                  className="text-5xl tracking-tight text-ink hover:opacity-70 transition-opacity"
-                  style={{ fontFamily: 'var(--font-display)' }}
-                >
-                  {label}
-                </Link>
-              ))}
-            </nav>
-            
-            <div className="flex flex-col gap-6 mt-12 pt-8 border-t border-border">
+          <div className="md:hidden fixed inset-0 z-[60] bg-white flex flex-col justify-between overflow-y-auto animate-fade-in">
+            {/* Mobile Header Bar */}
+            <div className="px-8 py-5 border-b border-border flex items-center justify-between">
               <Link
-                to="/account"
-                className="text-xs uppercase tracking-widest text-ink hover:opacity-60 transition-opacity"
-                style={{ fontFamily: 'var(--font-body)', fontWeight: 500 }}
+                to="/"
+                onClick={() => setMenuOpen(false)}
+                className="text-2xl tracking-tight select-none text-ink font-display"
               >
-                Account
+                LuxeFashion<sup className="text-xs align-super">®</sup>
               </Link>
-              <Link
-                to="/wishlist"
-                className="text-xs uppercase tracking-widest text-ink hover:opacity-60 transition-opacity"
-                style={{ fontFamily: 'var(--font-body)', fontWeight: 500 }}
+              <button
+                type="button"
+                onClick={() => setMenuOpen(false)}
+                className="text-ink p-2 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center focus-visible:outline-2 focus-visible:outline-ink"
+                aria-label="Close menu"
               >
-                Wishlist
-              </Link>
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  className="text-xs uppercase tracking-widest text-ink hover:opacity-60 transition-opacity"
-                  style={{ fontFamily: 'var(--font-body)', fontWeight: 500 }}
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Menu Links */}
+            <div className="px-8 py-8 flex-1">
+              {/* Shop Accordion / Dropdown */}
+              <div className="mb-6">
+                <button
+                  type="button"
+                  onClick={() => setMobileShopOpen(!mobileShopOpen)}
+                  className="w-full flex items-center justify-between text-3xl text-ink font-display py-2"
                 >
-                  Admin
+                  <span>Shop</span>
+                  <svg className={`w-5 h-5 text-muted transition-transform duration-200 ${mobileShopOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {mobileShopOpen && (
+                  <div className="pl-3 mt-3 space-y-3 border-l-2 border-border font-body">
+                    {SHOP_CATEGORIES.map(({ label, to }) => (
+                      <Link
+                        key={label}
+                        to={to}
+                        onClick={() => setMenuOpen(false)}
+                        className="block text-base text-muted hover:text-ink transition-colors py-1"
+                      >
+                        {label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <Link
+                  to="/#collections"
+                  onClick={() => setMenuOpen(false)}
+                  className="block text-3xl text-ink font-display py-2 hover:opacity-70 transition-opacity"
+                >
+                  Collections
                 </Link>
-              )}
-              <Link to="/shop?sort=new" className="btn-primary w-full !py-4 mt-2">
+                <Link
+                  to="/#story"
+                  onClick={() => setMenuOpen(false)}
+                  className="block text-3xl text-ink font-display py-2 hover:opacity-70 transition-opacity"
+                >
+                  Our Story
+                </Link>
+              </div>
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="px-8 py-8 border-t border-border bg-surface/40 flex flex-col gap-5">
+              <div className="grid grid-cols-2 gap-4">
+                <Link
+                  to="/account"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-xs uppercase tracking-widest text-ink hover:opacity-60 transition-opacity font-body font-medium"
+                >
+                  Account
+                </Link>
+                <Link
+                  to="/wishlist"
+                  onClick={() => setMenuOpen(false)}
+                  className="text-xs uppercase tracking-widest text-ink hover:opacity-60 transition-opacity font-body font-medium"
+                >
+                  Wishlist ({wishlistCount})
+                </Link>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setMenuOpen(false)}
+                    className="text-xs uppercase tracking-widest text-ink hover:opacity-60 transition-opacity font-body font-medium"
+                  >
+                    Admin Dashboard
+                  </Link>
+                )}
+              </div>
+              <Link
+                to="/shop?sort=new"
+                onClick={() => setMenuOpen(false)}
+                className="btn-primary w-full py-4 text-center mt-2"
+              >
                 New Arrivals
               </Link>
             </div>
