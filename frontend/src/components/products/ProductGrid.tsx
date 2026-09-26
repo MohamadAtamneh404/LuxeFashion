@@ -22,12 +22,12 @@ interface Product {
 }
 
 interface ProductGridProps {
-  category?: string;
-  /** 'new' = New Arrivals mode: always the full catalog, newest first, NEW badges. */
-  sort?: 'default' | 'new';
-  /** Search mode: fuzzy-match the full catalog, ordered by relevance. */
+  activeSort?: string;
+  activeFilters?: { brands: string[]; categories: string[] };
   query?: string;
 }
+
+const BRANDS = ['Luxe Minimal', 'Studio C', 'Aethel', 'Oversize Archive'];
 
 // Products added within the last 14 days get a "NEW" badge.
 const NEW_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
@@ -37,7 +37,7 @@ const isNewProduct = (p: Product): boolean => {
   return Number.isFinite(created) && Date.now() - created < NEW_WINDOW_MS;
 };
 
-const ProductGrid = ({ category = 'all', sort = 'default', query }: ProductGridProps) => {
+const ProductGrid = ({ activeSort = 'newest', activeFilters, query }: ProductGridProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState<string | null>(null);
@@ -47,35 +47,60 @@ const ProductGrid = ({ category = 'all', sort = 'default', query }: ProductGridP
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        // New Arrivals and Search always use the full catalog — the backend
-        // returns it newest-first (createdAt desc), which is what we want.
-        const url = query || sort === 'new' || category === 'all'
-          ? '/api/products'
-          : `/api/products/category/${category}`;
-        const response = await fetch(url);
+        // We fetch everything and filter/sort locally for the mockup
+        const response = await fetch('/api/products');
         if (!response.ok) throw new Error('Failed to fetch products');
-        const data: Product[] = await response.json();
+        let data: Product[] = await response.json();
 
+        // Inject mock brands and sub-categories
+        data = data.map((p, i) => {
+          let cat = 'Tops';
+          if (p.name.includes('Jeans') || p.name.includes('Trousers')) cat = 'Bottoms';
+          else if (p.category === 'footwear') cat = 'Shoes';
+          else if (p.category === 'accessories') cat = 'Accessories';
+          else if (p.name.includes('Coat')) cat = 'Outerwear';
+
+          return {
+            ...p,
+            brand: BRANDS[i % BRANDS.length],
+            subCategory: cat
+          };
+        });
+
+        // 1. Search
         if (query) {
-          // Fuzzy client-side search in relevance order — fine at this catalog
-          // size; swap for a server-side engine if the catalog grows large.
           const fuse = new Fuse(data, {
-            keys: [
-              { name: 'name', weight: 2 },
-              { name: 'category', weight: 1 },
-              { name: 'description', weight: 0.5 },
-            ],
+            keys: [{ name: 'name', weight: 2 }, { name: 'category', weight: 1 }, { name: 'description', weight: 0.5 }],
             threshold: 0.35,
             ignoreLocation: true,
           });
-          setProducts(fuse.search(query).map((r) => r.item));
-        } else {
-          // Category endpoint has no guaranteed order — sort newest first there too.
-          const sorted = [...data].sort((a, b) =>
-            (b.createdAt || '').localeCompare(a.createdAt || ''),
-          );
-          setProducts(sorted);
+          data = fuse.search(query).map((r) => r.item);
         }
+
+        // 2. Filter
+        if (activeFilters) {
+          if (activeFilters.brands.length > 0) {
+            data = data.filter(p => activeFilters.brands.includes((p as any).brand));
+          }
+          if (activeFilters.categories.length > 0) {
+            // Also support top-level routing categories ('men', 'women') as fallback
+            data = data.filter(p => 
+              activeFilters.categories.includes((p as any).subCategory) ||
+              activeFilters.categories.includes(p.category)
+            );
+          }
+        }
+
+        // 3. Sort
+        data.sort((a, b) => {
+          if (activeSort === 'price-asc') return a.price - b.price;
+          if (activeSort === 'price-desc') return b.price - a.price;
+          if (activeSort === 'rating') return (b.ratingAvg || 0) - (a.ratingAvg || 0);
+          // default: newest
+          return (b.createdAt || '').localeCompare(a.createdAt || '');
+        });
+
+        setProducts(data);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch products');
@@ -84,18 +109,7 @@ const ProductGrid = ({ category = 'all', sort = 'default', query }: ProductGridP
       }
     };
     fetchProducts();
-  }, [category, sort, query]);
-
-  const handleAddToCart = (product: Product) => {
-    addToCart({
-      productId: product.id,
-      name     : product.name,
-      price    : product.price,
-      image    : product.image,
-      quantity : 1,
-      size     : product.sizes[0] || 'One Size',
-    });
-  };
+  }, [activeSort, activeFilters, query]);
 
   if (loading) {
     return (
@@ -230,12 +244,40 @@ const ProductGrid = ({ category = 'all', sort = 'default', query }: ProductGridP
               </div>
             </div>
 
-            <button
-              onClick={() => handleAddToCart(product)}
-              className="btn-primary w-full !py-2.5 !text-sm mt-auto"
-            >
-              Add to Cart
-            </button>
+            <div className="mt-auto pt-2 relative">
+              {/* Default state button */}
+              <div tabIndex={0} className="w-full h-10 border-[1.5px] border-ink text-ink flex items-center justify-center text-sm font-medium transition-colors lg:group-hover:bg-ink lg:group-hover:text-surface focus-within:bg-ink focus-within:text-surface rounded-full cursor-pointer relative overflow-hidden group/quickadd">
+                <span className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover:-translate-y-full group-focus-within/quickadd:-translate-y-full pointer-events-none">
+                  Quick Add
+                </span>
+                
+                {/* Size selector reveals on hover inside the button footprint */}
+                <div className="absolute inset-0 flex items-center justify-center gap-1 bg-ink text-surface translate-y-full transition-transform duration-300 lg:group-hover:translate-y-0 group-focus-within/quickadd:translate-y-0 px-2">
+                  {product.sizes.slice(0, 4).map((size) => (
+                    <button
+                      key={size}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        addToCart({
+                          productId: product.id,
+                          name: product.name,
+                          price: product.price,
+                          image: product.image,
+                          quantity: 1,
+                          size: size,
+                        });
+                      }}
+                      className="text-xs px-2 py-1.5 rounded hover:bg-white/20 transition-colors focus:outline-none focus:bg-white/20"
+                      style={{ fontFamily: 'var(--font-body)' }}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                  {product.sizes.length > 4 && <span className="text-xs px-1 pointer-events-none">...</span>}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         );

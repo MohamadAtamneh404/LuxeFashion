@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, FormEvent, DragEvent, ChangeEvent } from 'react';
+import { useState, useEffect, useRef, FormEvent, DragEvent, ChangeEvent, KeyboardEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Layout from '../components/layout/Layout';
@@ -17,30 +17,49 @@ import {
 const CATEGORIES = ['men', 'women', 'accessories', 'footwear'];
 const EMPTY: ProductInput = { name: '', price: 0, image: '', sizes: [], category: 'men', description: '', stock: 0, salePrice: 0 };
 
-// Shared form styling ג€” matches the LuxeFashion design system (ink/border/surface).
 const inputClass =
-  'w-full border border-border rounded-xl px-4 py-3 text-sm bg-white text-ink ' +
-  'placeholder:text-muted focus:outline-none focus:border-ink transition-colors';
-const labelClass = 'block text-xs uppercase tracking-widest text-ink font-medium mb-2';
+  'w-full border border-border rounded-xl px-4 py-3 text-sm bg-white text-ink font-body ' +
+  'placeholder:text-muted focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink transition-colors';
+const labelClass = 'block text-xs uppercase tracking-widest text-ink font-medium mb-2 font-body';
 
-// Price label for catalogue rows — sale price with the original in parentheses
-// when discounted. (USD = the dollar sign, written as an escape to keep editors happy.)
 const USD = '$';
 const priceLabel = (p: Product): string =>
   p.salePrice && p.salePrice > 0 && p.salePrice < p.price
     ? USD + p.salePrice + ' (was ' + USD + p.price + ')'
     : USD + p.price;
 
+const Icons = {
+  Upload: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mx-auto mb-4 text-muted">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="17 8 12 3 7 8"></polyline>
+      <line x1="12" y1="3" x2="12" y2="15"></line>
+    </svg>
+  ),
+  EmptyBox: (
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mx-auto mb-4 text-muted">
+      <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+      <line x1="12" y1="22.08" x2="12" y2="12"></line>
+    </svg>
+  )
+};
+
 function Admin() {
   const { user, isAdmin, loading } = useAuth();
+  const [activeTab, setActiveTab] = useState<'catalogue' | 'editor'>('catalogue');
   const [products, setProducts] = useState<Product[]>([]);
   const [listLoading, setListLoading] = useState(true);
+  
   const [form, setForm] = useState<ProductInput>(EMPTY);
   const [sizesText, setSizesText] = useState('S,M,L');
   const [anglesText, setAnglesText] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  
   const [message, setMessage] = useState<{ kind: 'error' | 'success'; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const loadProducts = async () => {
     setListLoading(true);
@@ -64,15 +83,14 @@ function Admin() {
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Upload a dropped / picked image to Firebase Storage and use its URL.
   const handleImageFile = async (file: File | null | undefined) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setMessage({ kind: 'error', text: 'Please choose an image file (PNG, JPG, WebPג€¦)' });
+      setMessage({ kind: 'error', text: 'Please choose an image file (PNG, JPG, WebP…)' });
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setMessage({ kind: 'error', text: 'Image is too large ג€” please use a file under 5 MB.' });
+      setMessage({ kind: 'error', text: 'Image is too large — please use a file under 5 MB.' });
       return;
     }
     setUploading(true);
@@ -103,7 +121,14 @@ function Admin() {
 
   const onFilePicked = (e: ChangeEvent<HTMLInputElement>) => {
     handleImageFile(e.target.files?.[0]);
-    e.target.value = ''; // allow picking the same file again
+    e.target.value = '';
+  };
+  
+  const handleDropzoneKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      fileInputRef.current?.click();
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -111,7 +136,6 @@ function Admin() {
     setSaving(true);
     setMessage(null);
     try {
-      // Gallery of angles ג€” the main image is always the first angle.
       const extraAngles = anglesText
         .split(',')
         .map((s) => s.trim())
@@ -140,6 +164,7 @@ function Admin() {
       setSizesText('S,M,L');
       setAnglesText('');
       setEditingId(null);
+      setActiveTab('catalogue');
       await loadProducts();
     } catch (err) {
       setMessage({ kind: 'error', text: err instanceof Error ? err.message : 'Save failed' });
@@ -161,18 +186,18 @@ function Admin() {
       salePrice: p.salePrice ?? 0,
     });
     setSizesText(p.sizes.join(','));
-    // Extra angles = the gallery minus the main image (which has its own field).
     setAnglesText((p.images || []).slice(1).join(', '));
     setMessage(null);
+    setActiveTab('editor');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this product?')) return;
     setMessage(null);
     try {
       await deleteProduct(id);
       setMessage({ kind: 'success', text: 'Product deleted.' });
+      setConfirmDeleteId(null);
       await loadProducts();
     } catch (err) {
       setMessage({ kind: 'error', text: err instanceof Error ? err.message : 'Delete failed' });
@@ -193,15 +218,10 @@ function Admin() {
     return (
       <Layout>
         <div className="max-w-md mx-auto px-8 py-40 text-center">
-          <p className="text-xs uppercase tracking-widest text-muted mb-3"
-            style={{ fontFamily: 'var(--font-body)' }}>
-            Restricted
-          </p>
-          <h1 className="text-4xl md:text-5xl text-ink mb-4"
-            style={{ fontFamily: 'var(--font-display)' }}>
-            Admins <em style={{ color: '#6F6F6F' }}>only.</em>
+          <h1 className="text-4xl md:text-5xl text-ink mb-4 font-display">
+            Admins <em className="text-muted italic">only.</em>
           </h1>
-          <p className="text-muted text-sm mb-10" style={{ fontFamily: 'var(--font-body)' }}>
+          <p className="text-muted text-sm mb-10 font-body">
             You must be signed in with an admin account to manage products.
           </p>
           <Link to="/account" className="btn-primary">Go to Account</Link>
@@ -216,207 +236,257 @@ function Admin() {
       <div className="max-w-7xl mx-auto px-8 py-20">
 
         {/* Header */}
-        <div className="mb-12">
-          <p className="text-xs uppercase tracking-widest text-muted mb-3"
-            style={{ fontFamily: 'var(--font-body)' }}>
-            Admin
-          </p>
-          <h1 className="text-4xl md:text-5xl text-ink mb-3"
-            style={{ fontFamily: 'var(--font-display)' }}>
-            Product <em style={{ color: '#6F6F6F' }}>management.</em>
-          </h1>
-          <p className="text-muted text-sm" style={{ fontFamily: 'var(--font-body)' }}>
-            Add, edit and curate the LuxeFashion catalogue.
-          </p>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 border-b border-border pb-8">
+          <div>
+            <h1 className="text-4xl md:text-5xl text-ink mb-3 font-display">
+              Admin <em className="text-muted italic">Dashboard.</em>
+            </h1>
+            <p className="text-muted text-sm font-body">
+              Manage inventory, upload products, and curate the LuxeFashion catalogue.
+            </p>
+          </div>
+          <div className="flex bg-surface rounded-full p-1" role="tablist">
+            <button
+              role="tab"
+              aria-selected={activeTab === 'catalogue'}
+              onClick={() => { setActiveTab('catalogue'); setMessage(null); }}
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 focus-visible:outline-2 focus-visible:outline-ink font-body ${
+                activeTab === 'catalogue' ? 'bg-ink text-white shadow-sm' : 'text-muted hover:text-ink'
+              }`}
+            >
+              Catalogue
+            </button>
+            <button
+              role="tab"
+              aria-selected={activeTab === 'editor'}
+              onClick={() => { setActiveTab('editor'); setMessage(null); }}
+              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 focus-visible:outline-2 focus-visible:outline-ink font-body ${
+                activeTab === 'editor' ? 'bg-ink text-white shadow-sm' : 'text-muted hover:text-ink'
+              }`}
+            >
+              {editingId ? 'Edit Product' : 'Add Product'}
+            </button>
+          </div>
         </div>
 
         {/* Feedback banner */}
         {message && (
           <p
-            className={`max-w-3xl mb-8 text-sm rounded-xl px-4 py-3 border ${
+            className={`max-w-full mb-8 text-sm rounded-xl px-4 py-3 border font-body ${
               message.kind === 'error'
-                ? 'text-red-600 bg-red-50 border-red-200'
+                ? 'text-[#B91C1C] bg-[#FEF2F2] border-[#FECACA]'
                 : 'text-ink bg-surface border-border'
             }`}
-            style={{ fontFamily: 'var(--font-body)' }}
           >
             {message.text}
           </p>
         )}
 
-        {/* ג”€ג”€ Add / edit form ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */}
-        <form onSubmit={handleSubmit} className="card p-8 mb-16 max-w-3xl space-y-6">
-          <h2 className="text-3xl text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-            {editingId ? 'Edit Product' : 'Add a Product'}
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label htmlFor="product-name" className={labelClass}>Name</label>
-              <input id="product-name" className={inputClass} value={form.name}
-                onChange={(e) => set('name', e.target.value)} placeholder="Essential Cotton Tee" required />
-            </div>
-            <div>
-              <label htmlFor="product-price" className={labelClass}>Price (USD)</label>
-              <input id="product-price" className={inputClass} type="number" step="0.01" min="0"
-                value={form.price} onChange={(e) => set('price', e.target.value)} placeholder="95" required />
-            </div>
-            <div>
-              <label htmlFor="product-sale-price" className={labelClass}>Sale Price (0 = no sale)</label>
-              <input id="product-sale-price" className={inputClass} type="number" step="0.01" min="0"
-                value={form.salePrice ?? 0} onChange={(e) => set('salePrice', e.target.value)} placeholder="0" />
-            </div>
-            <div>
-              <label htmlFor="product-category" className={labelClass}>Category</label>
-              <select id="product-category" className={`${inputClass} capitalize`} value={form.category}
-                onChange={(e) => set('category', e.target.value)}>
-                {CATEGORIES.map((c) => <option key={c} value={c} className="capitalize">{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="product-stock" className={labelClass}>Stock</label>
-              <input id="product-stock" className={inputClass} type="number" min="0"
-                value={form.stock ?? 0} onChange={(e) => set('stock', e.target.value)} placeholder="20" />
-            </div>
-          </div>
-
-          {/* Image ג€” drag & drop / click to upload, or paste a URL */}
-          <div>
-            <label className={labelClass}>Product Image</label>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-              onDragEnter={(e) => { e.preventDefault(); setDragActive(true); }}
-              onDragLeave={() => setDragActive(false)}
-              onDrop={onDrop}
-              className={`cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition-colors ${
-                dragActive ? 'border-ink bg-surface' : 'border-border hover:border-muted'
-              }`}
-            >
-              {form.image ? (
-                <img src={form.image} alt="Product preview"
-                  className="mx-auto mb-4 h-36 w-36 rounded-xl object-cover border border-border" />
-              ) : (
-                <svg className="mx-auto mb-4 w-8 h-8 text-muted" fill="none" stroke="currentColor"
-                  viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round"
-                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                </svg>
-              )}
-              <p className="text-sm text-muted" style={{ fontFamily: 'var(--font-body)' }}>
-                {uploading
-                  ? 'Uploadingג€¦'
-                  : form.image
-                    ? 'Drop a new image here or click to replace it'
-                    : 'Drag & drop an image here, or click to browse'}
-              </p>
-            </div>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
-              onChange={onFilePicked} />
-            <input className={`${inputClass} mt-3`} value={form.image}
-              onChange={(e) => set('image', e.target.value)}
-              placeholder="ג€¦or paste an image URL (https://ג€¦)" required />
-          </div>
-
-          {/* Extra angles ג€” shown on hover in the shop and as a gallery on the product page */}
-          <div>
-            <label htmlFor="product-angles" className={labelClass}>Additional Angles</label>
-            <input id="product-angles" className={inputClass} value={anglesText}
-              onChange={(e) => setAnglesText(e.target.value)}
-              placeholder="https://ג€¦ , https://ג€¦" />
-            <p className="text-xs text-muted mt-2" style={{ fontFamily: 'var(--font-body)' }}>
-              Comma-separated image URLs for other angles ג€” shoppers see them on hover in the shop
-              and as a clickable gallery on the product page.
-            </p>
-            {anglesText.trim() && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                {anglesText.split(',').map((s) => s.trim()).filter(Boolean).map((url) => (
-                  <img key={url} src={url} alt="Angle preview"
-                    className="w-12 h-14 object-cover rounded-lg border border-border" />
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="product-sizes" className={labelClass}>Sizes</label>
-            <input id="product-sizes" className={inputClass} value={sizesText}
-              onChange={(e) => setSizesText(e.target.value)} placeholder="S,M,L,XL" />
-            <p className="text-xs text-muted mt-2" style={{ fontFamily: 'var(--font-body)' }}>
-              Separate sizes with commas ג€” e.g. S,M,L,XL or 40,41,42
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="product-description" className={labelClass}>Description</label>
-            <textarea id="product-description" className={`${inputClass} resize-none`} rows={4}
-              value={form.description} onChange={(e) => set('description', e.target.value)}
-              placeholder="A short, evocative description of the pieceג€¦" />
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button type="submit" disabled={saving || uploading}
-              className="btn-primary px-8 disabled:opacity-50">
-              {saving ? 'Savingג€¦' : editingId ? 'Update Product' : 'Add Product'}
-            </button>
-            {editingId && (
-              <button type="button" className="btn-secondary px-8"
-                onClick={() => { setEditingId(null); setForm(EMPTY); setSizesText('S,M,L'); setAnglesText(''); setMessage(null); }}>
-                Cancel
-              </button>
-            )}
-          </div>
-        </form>
-
-        {/* ג”€ג”€ Catalogue list ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */}
-        <div className="flex items-end justify-between mb-6 max-w-3xl">
-          <h2 className="text-3xl text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-            Catalogue
-          </h2>
-          <p className="text-xs uppercase tracking-widest text-muted"
-            style={{ fontFamily: 'var(--font-body)' }}>
-            {products.length} {products.length === 1 ? 'product' : 'products'}
-          </p>
-        </div>
-
-        {listLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-[1.5px] border-ink border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : products.length === 0 ? (
-          <div className="card p-10 text-center max-w-3xl">
-            <p className="text-muted text-sm" style={{ fontFamily: 'var(--font-body)' }}>
-              No products yet. Add your first one above.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3 max-w-3xl">
-            {products.map((p) => (
-              <div key={p.id} className="card flex items-center gap-5 p-4">
-                <img src={p.image} alt={p.name}
-                  className="w-16 h-20 object-cover rounded-xl border border-border flex-shrink-0" />
-                <div className="flex-grow min-w-0">
-                  <h3 className="text-lg text-ink truncate"
-                    style={{ fontFamily: 'var(--font-display)' }}>
-                    {p.name}
-                  </h3>
-                  <p className="text-xs uppercase tracking-wide text-muted"
-                    style={{ fontFamily: 'var(--font-body)' }}>
-                    {p.category} · {priceLabel(p)} · stock {p.stock ?? 0}
-                  </p>
+        {/* ── Add / Edit Product Tab ── */}
+        {activeTab === 'editor' && (
+          <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-8">
+            {/* General Info Card */}
+            <div className="border border-border rounded-3xl p-8 bg-white shadow-sm">
+              <h2 className="text-xl text-ink mb-6 font-display border-b border-border/50 pb-4">General Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label htmlFor="product-name" className={labelClass}>Product Name</label>
+                  <input id="product-name" className={inputClass} value={form.name}
+                    onChange={(e) => set('name', e.target.value)} placeholder="Essential Cotton Tee" required />
                 </div>
-                <button onClick={() => startEdit(p)}
-                  className="text-sm text-ink underline underline-offset-4 hover:opacity-60 transition-opacity flex-shrink-0"
-                  style={{ fontFamily: 'var(--font-body)' }}>
-                  Edit
+                <div className="md:col-span-2">
+                  <label htmlFor="product-description" className={labelClass}>Description</label>
+                  <textarea id="product-description" className={`${inputClass} resize-none`} rows={4}
+                    value={form.description} onChange={(e) => set('description', e.target.value)}
+                    placeholder="A short, evocative description of the piece…" />
+                </div>
+                <div>
+                  <label htmlFor="product-category" className={labelClass}>Category</label>
+                  <select id="product-category" className={`${inputClass} capitalize`} value={form.category}
+                    onChange={(e) => set('category', e.target.value)}>
+                    {CATEGORIES.map((c) => <option key={c} value={c} className="capitalize">{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="product-sizes" className={labelClass}>Sizes</label>
+                  <input id="product-sizes" className={inputClass} value={sizesText}
+                    onChange={(e) => setSizesText(e.target.value)} placeholder="S,M,L,XL" />
+                  <p className="text-[11px] text-muted mt-2 font-body">Comma-separated (e.g. S,M,L or 40,41,42)</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Pricing & Inventory Card */}
+            <div className="border border-border rounded-3xl p-8 bg-white shadow-sm">
+              <h2 className="text-xl text-ink mb-6 font-display border-b border-border/50 pb-4">Pricing & Inventory</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label htmlFor="product-price" className={labelClass}>Price (USD)</label>
+                  <input id="product-price" className={inputClass} type="number" step="0.01" min="0"
+                    value={form.price} onChange={(e) => set('price', e.target.value)} placeholder="95" required />
+                </div>
+                <div>
+                  <label htmlFor="product-sale-price" className={labelClass}>Sale Price</label>
+                  <input id="product-sale-price" className={inputClass} type="number" step="0.01" min="0"
+                    value={form.salePrice ?? 0} onChange={(e) => set('salePrice', e.target.value)} placeholder="0 (No sale)" />
+                </div>
+                <div>
+                  <label htmlFor="product-stock" className={labelClass}>Initial Stock</label>
+                  <input id="product-stock" className={inputClass} type="number" min="0"
+                    value={form.stock ?? 0} onChange={(e) => set('stock', e.target.value)} placeholder="20" />
+                </div>
+              </div>
+            </div>
+
+            {/* Media Gallery Card */}
+            <div className="border border-border rounded-3xl p-8 bg-white shadow-sm">
+              <h2 className="text-xl text-ink mb-6 font-display border-b border-border/50 pb-4">Media Gallery</h2>
+              <div className="space-y-6">
+                <div>
+                  <label className={labelClass}>Primary Image</label>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={handleDropzoneKeyDown}
+                    onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+                    onDragEnter={(e) => { e.preventDefault(); setDragActive(true); }}
+                    onDragLeave={() => setDragActive(false)}
+                    onDrop={onDrop}
+                    aria-label="Upload product image"
+                    className={`cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-colors focus-visible:outline-2 focus-visible:outline-ink focus-visible:outline-offset-2 ${
+                      dragActive ? 'border-ink bg-surface' : 'border-border hover:border-muted'
+                    }`}
+                  >
+                    {form.image ? (
+                      <img src={form.image} alt="Product preview"
+                        className="mx-auto mb-4 h-48 w-40 object-cover rounded-xl border border-border shadow-sm" />
+                    ) : (
+                      Icons.Upload
+                    )}
+                    <p className="text-sm text-muted font-body">
+                      {uploading
+                        ? 'Uploading…'
+                        : form.image
+                          ? 'Drop a new image here or click to replace it'
+                          : 'Drag & drop an image here, or click to browse'}
+                    </p>
+                  </div>
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" tabIndex={-1} onChange={onFilePicked} />
+                  <input className={`${inputClass} mt-3`} value={form.image}
+                    onChange={(e) => set('image', e.target.value)}
+                    placeholder="…or paste an image URL (https://…)" required />
+                </div>
+
+                <div className="pt-4 border-t border-border/50">
+                  <label htmlFor="product-angles" className={labelClass}>Additional Angles</label>
+                  <input id="product-angles" className={inputClass} value={anglesText}
+                    onChange={(e) => setAnglesText(e.target.value)}
+                    placeholder="https://… , https://…" />
+                  <p className="text-[11px] text-muted mt-2 font-body">
+                    Comma-separated image URLs for alternative views. Displayed as a hover gallery.
+                  </p>
+                  {anglesText.trim() && (
+                    <div className="flex flex-wrap gap-3 mt-4">
+                      {anglesText.split(',').map((s) => s.trim()).filter(Boolean).map((url) => (
+                        <img key={url} src={url} alt="Angle preview"
+                          className="w-16 h-20 object-cover rounded-lg border border-border bg-surface" />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4 pt-4 border-t border-border">
+              <button type="submit" disabled={saving || uploading}
+                className="btn-primary px-10 py-4 disabled:opacity-50">
+                {saving ? 'Saving…' : editingId ? 'Update Product' : 'Add Product'}
+              </button>
+              {editingId && (
+                <button type="button" className="btn-secondary px-10 py-4"
+                  onClick={() => { setEditingId(null); setForm(EMPTY); setSizesText('S,M,L'); setAnglesText(''); setMessage(null); setActiveTab('catalogue'); }}>
+                  Cancel
                 </button>
-                <button onClick={() => handleDelete(p.id)}
-                  className="text-sm text-red-600 hover:opacity-70 transition-opacity flex-shrink-0"
-                  style={{ fontFamily: 'var(--font-body)' }}>
-                  Delete
+              )}
+            </div>
+          </form>
+        )}
+
+        {/* ── Catalogue Tab ── */}
+        {activeTab === 'catalogue' && (
+          <div>
+            {listLoading ? (
+              <div className="flex justify-center py-20">
+                <div className="w-8 h-8 border-[1.5px] border-ink border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : products.length === 0 ? (
+              <div className="py-24 text-center border border-border rounded-3xl bg-white shadow-sm flex flex-col items-center">
+                {Icons.EmptyBox}
+                <h3 className="text-2xl text-ink font-display mb-2">Catalogue is empty</h3>
+                <p className="text-muted text-sm font-body mb-8 max-w-sm">
+                  You haven't added any products to the store yet. Start building your inventory.
+                </p>
+                <button onClick={() => setActiveTab('editor')} className="btn-primary">
+                  Add First Product
                 </button>
               </div>
-            ))}
+            ) : (
+              <div className="border border-border rounded-3xl overflow-x-auto bg-white shadow-sm">
+                <table className="w-full text-left font-body text-sm whitespace-nowrap">
+                  <thead>
+                    <tr className="border-b border-border bg-surface/50 text-xs uppercase tracking-widest text-muted">
+                      <th className="px-6 py-4 font-medium">Product</th>
+                      <th className="px-6 py-4 font-medium">Category</th>
+                      <th className="px-6 py-4 font-medium text-right">Price</th>
+                      <th className="px-6 py-4 font-medium text-right">Stock</th>
+                      <th className="px-6 py-4 font-medium text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/50">
+                    {products.map((p) => (
+                      <tr key={p.id} className="hover:bg-surface/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <img src={p.image} alt={p.name} className="w-12 h-16 object-cover rounded-lg border border-border bg-surface flex-shrink-0" />
+                            <div className="min-w-[150px] max-w-[250px]">
+                              <p className="font-medium text-ink truncate" title={p.name}>{p.name}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-muted capitalize">{p.category}</td>
+                        <td className="px-6 py-4 text-ink text-right font-medium">{priceLabel(p)}</td>
+                        <td className="px-6 py-4 text-right">
+                          <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
+                            (p.stock ?? 0) <= 5 ? 'bg-[#FEF2F2] text-[#B91C1C]' : 'bg-surface text-ink border border-border'
+                          }`}>
+                            {p.stock ?? 0}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          {confirmDeleteId === p.id ? (
+                            <div className="flex items-center justify-end gap-3">
+                              <span className="text-xs text-[#B91C1C]">Sure?</span>
+                              <button onClick={() => handleDelete(p.id)} className="text-[#B91C1C] hover:underline font-medium">Yes</button>
+                              <button onClick={() => setConfirmDeleteId(null)} className="text-muted hover:underline">No</button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-end gap-4">
+                              <button onClick={() => startEdit(p)} className="text-ink hover:underline font-medium focus-visible:outline-ink rounded">
+                                Edit
+                              </button>
+                              <button onClick={() => setConfirmDeleteId(p.id)} className="text-muted hover:text-[#B91C1C] transition-colors focus-visible:outline-[#B91C1C] rounded">
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>

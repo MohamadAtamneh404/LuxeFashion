@@ -86,9 +86,7 @@ const CinematicHero = () => {
       {/* ── Video (z-0) — fills the whole hero so everything fits on screen ──── */}
       <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
         {/* Top + bottom white bleed gradients */}
-        <div className="absolute inset-0 z-10 pointer-events-none"
-          style={{ background: 'linear-gradient(to bottom, #fff 0%, transparent 25%, transparent 75%, #fff 100%)' }}
-        />
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-b from-white via-transparent to-white" />
         <video
           ref={videoRef}
           src={VIDEO_URL}
@@ -104,65 +102,49 @@ const CinematicHero = () => {
       <section
         className="hero-full relative z-10 flex flex-col items-center justify-center text-center px-6 py-14"
       >
-        {/* Eyebrow — tighter tracking on narrow phones so it never wraps ugly */}
-        <p
-          className="animate-fade-rise mb-6 text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em]"
-          style={{ fontFamily: 'var(--font-body)', color: '#6F6F6F' }}
-        >
-          LuxeFashion · Premium Apparel
-        </p>
-
-        {/* Headline — fluid clamp() sizing, safe on every phone width */}
-        <h1
-          className="animate-fade-rise hero-headline font-normal max-w-5xl"
-          style={{ fontFamily: 'var(--font-display)', color: '#000000' }}
-        >
-          Beyond{' '}
-          <em style={{ color: '#6F6F6F', fontStyle: 'italic' }}>fabric,</em>
-          <br />
-          we dress the{' '}
-          <em style={{ color: '#6F6F6F', fontStyle: 'italic' }}>extraordinary.</em>
-        </h1>
-
-        {/* Description */}
-        <p
-          className="animate-fade-rise-delay mt-8 max-w-2xl text-base sm:text-lg leading-relaxed"
-          style={{ fontFamily: 'var(--font-body)', color: '#6F6F6F' }}
-        >
-          Curating premium clothing for bold minds, fearless creators, and
-          everyday visionaries. Crafted from the finest fabrics — designed to
-          move with you, season after season.
-        </p>
-
-        {/* CTAs — full-width on phones for easy thumb reach, inline on desktop */}
-        <div className="animate-fade-rise-delay-2 mt-10 flex flex-col sm:flex-row gap-4 items-center w-full sm:w-auto max-w-sm sm:max-w-none">
-          <Link
-            to="/shop"
-            id="hero-cta-primary"
-            className="rounded-full text-base text-white text-center transition-transform duration-200 hover:scale-[1.03] active:scale-100 w-full sm:w-auto"
-            style={{ background: '#000', fontFamily: 'var(--font-body)', padding: '1.25rem 3.5rem' }}
+        {/* Glass backing for perfect legibility over video */}
+        <div className="bg-white/50 backdrop-blur-md px-8 py-12 sm:p-14 rounded-3xl flex flex-col items-center shadow-sm max-w-4xl mx-auto border border-white/20">
+          
+          {/* Headline — fluid clamp() sizing, safe on every phone width */}
+          <h1
+            className="animate-fade-rise hero-headline font-normal max-w-5xl font-display text-ink"
           >
-            Explore Collection
-          </Link>
-          <Link
-            to="/#story"
-            id="hero-cta-secondary"
-            className="rounded-full text-base text-center transition-transform duration-200 hover:scale-[1.03] active:scale-100 w-full sm:w-auto"
-            style={{
-              background  : 'transparent',
-              color       : '#000',
-              fontFamily  : 'var(--font-body)',
-              padding     : '1.2rem 3.5rem',
-              border      : '1.5px solid #E5E5E5',
-            }}
+            Timeless silhouettes.
+            <br />
+            <em className="text-muted italic">Everyday luxury.</em>
+          </h1>
+
+          {/* Description */}
+          <p
+            className="animate-fade-rise-delay mt-6 max-w-xl text-base sm:text-lg leading-relaxed font-body text-ink/80"
           >
-            Our Story
-          </Link>
+            Curating elevated essentials from the finest materials. Clean lines, 
+            tactile premium fabrics, and a reliable fit designed to move with you, 
+            season after season.
+          </p>
+
+          {/* CTAs — full-width on phones for easy thumb reach, inline on desktop */}
+          <div className="animate-fade-rise-delay-2 mt-10 flex flex-col sm:flex-row gap-4 items-center w-full sm:w-auto">
+            <Link
+              to="/shop"
+              id="hero-cta-primary"
+              className="rounded-full text-base text-surface bg-ink text-center transition-transform duration-200 hover:scale-[1.03] active:scale-100 w-full sm:w-auto font-body py-4 px-10"
+            >
+              Explore Collection
+            </Link>
+            <Link
+              to="/#story"
+              id="hero-cta-secondary"
+              className="rounded-full text-base text-ink bg-transparent text-center transition-transform duration-200 hover:scale-[1.03] active:scale-100 w-full sm:w-auto font-body py-[15px] px-10 border-[1.5px] border-border"
+            >
+              Our Story
+            </Link>
+          </div>
         </div>
 
         {/* Scroll indicator — hidden on short landscape screens via CSS */}
         <div className="hero-scroll-hint mt-10 flex flex-col items-center gap-2 opacity-40">
-          <p className="text-xs uppercase tracking-widest" style={{ fontFamily: 'var(--font-body)' }}>Scroll</p>
+          <p className="text-xs uppercase tracking-widest font-body text-ink">Scroll</p>
           <div className="w-px h-8 bg-ink/40 animate-pulse" />
         </div>
       </section>

@@ -79,6 +79,16 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     return () => window.removeEventListener('keydown', onKey);
   }, [menuOpen]);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [menuOpen]);
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
 
@@ -196,46 +206,51 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </div>
 
-        {/* Mobile menu panel */}
+        {/* Mobile menu full-screen overlay */}
         {menuOpen && (
-          <nav className="md:hidden border-t border-border bg-white px-8 py-4 flex flex-col gap-4">
-            {NAV_LINKS.map(({ label, to }) => (
+          <div className="md:hidden fixed inset-0 top-[73px] z-40 bg-white flex flex-col justify-between px-8 py-10 animate-fade-in overflow-y-auto">
+            <nav className="flex flex-col gap-8">
+              {NAV_LINKS.map(({ label, to }) => (
+                <Link
+                  key={label}
+                  to={to}
+                  className="text-5xl tracking-tight text-ink hover:opacity-70 transition-opacity"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
+            
+            <div className="flex flex-col gap-6 mt-12 pt-8 border-t border-border">
               <Link
-                key={label}
-                to={to}
-                className="text-sm text-muted hover:text-ink transition-colors"
-                style={{ fontFamily: 'var(--font-body)' }}
+                to="/account"
+                className="text-xs uppercase tracking-widest text-ink hover:opacity-60 transition-opacity"
+                style={{ fontFamily: 'var(--font-body)', fontWeight: 500 }}
               >
-                {label}
+                Account
               </Link>
-            ))}
-            <Link
-              to="/account"
-              className="text-sm text-muted hover:text-ink transition-colors"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
-              Account
-            </Link>
-            {isAdmin && (
               <Link
-                to="/admin"
-                className="text-sm text-muted hover:text-ink transition-colors"
-                style={{ fontFamily: 'var(--font-body)' }}
+                to="/wishlist"
+                className="text-xs uppercase tracking-widest text-ink hover:opacity-60 transition-opacity"
+                style={{ fontFamily: 'var(--font-body)', fontWeight: 500 }}
               >
-                Admin
+                Wishlist
               </Link>
-            )}
-            <Link
-              to="/wishlist"
-              className="text-sm text-muted hover:text-ink transition-colors"
-              style={{ fontFamily: 'var(--font-body)' }}
-            >
-              Wishlist
-            </Link>
-            <Link to="/shop?sort=new" className="btn-primary !py-2 !px-5 !text-sm self-start">
-              New Arrivals
-            </Link>
-          </nav>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="text-xs uppercase tracking-widest text-ink hover:opacity-60 transition-opacity"
+                  style={{ fontFamily: 'var(--font-body)', fontWeight: 500 }}
+                >
+                  Admin
+                </Link>
+              )}
+              <Link to="/shop?sort=new" className="btn-primary w-full !py-4 mt-2">
+                New Arrivals
+              </Link>
+            </div>
+          </div>
         )}
       </header>
 

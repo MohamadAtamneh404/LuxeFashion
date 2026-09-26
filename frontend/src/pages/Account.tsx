@@ -32,19 +32,120 @@ const friendlyError = (err: unknown): string => {
   }
 };
 
-// Shared form styling — matches the LuxeFashion design system (ink/border/surface).
 const inputClass =
   'w-full border border-border rounded-xl px-4 py-3 text-sm bg-white text-ink ' +
-  'placeholder:text-muted focus:outline-none focus:border-ink transition-colors';
-const labelClass = 'block text-xs uppercase tracking-widest text-ink font-medium mb-2';
+  'placeholder:text-muted focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink transition-colors font-body';
+const labelClass = 'block text-xs uppercase tracking-widest text-ink font-medium mb-2 font-body';
 
 const STATUS_STYLES: Record<string, string> = {
-  pending: 'border border-border text-muted',
-  processing: 'border border-ink text-ink',
-  shipped: 'border border-ink text-ink',
-  delivered: 'bg-ink text-white',
-  cancelled: 'border border-border text-muted line-through',
+  pending: 'text-muted before:bg-muted',
+  processing: 'text-ink before:bg-ink',
+  shipped: 'text-ink before:bg-ink',
+  delivered: 'text-ink font-medium before:bg-ink',
+  cancelled: 'text-muted line-through before:bg-border',
 };
+
+const Icons = {
+  ChevronDown: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  ),
+  Package: (
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-muted mb-6">
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+      <line x1="12" y1="22.08" x2="12" y2="12"></line>
+    </svg>
+  )
+};
+
+// Expandable order row component
+function OrderRow({ order }: { order: Order }) {
+  const [expanded, setExpanded] = useState(false);
+  
+  return (
+    <div className="border border-border rounded-2xl overflow-hidden bg-white">
+      {/* Summary Header (Clickable) */}
+      <button 
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 text-left hover:bg-surface/50 transition-colors focus-visible:outline-2 focus-visible:outline-ink focus-visible:outline-offset-[-2px]"
+      >
+        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-6 font-body text-sm">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-muted mb-1">Order</p>
+            <p className="font-medium text-ink">#{order.id?.slice(0, 8).toUpperCase()}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-widest text-muted mb-1">Date</p>
+            <p className="text-ink">
+              {order.createdAt ? new Date(order.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-widest text-muted mb-1">Total</p>
+            <p className="font-medium text-ink">${order.totalAmount.toFixed(2)}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-widest text-muted mb-1">Status</p>
+            <p className={`capitalize flex items-center gap-2 before:content-[''] before:block before:w-1.5 before:h-1.5 before:rounded-full ${STATUS_STYLES[order.status || 'pending'] || STATUS_STYLES.pending}`}>
+              {order.status || 'pending'}
+            </p>
+          </div>
+        </div>
+        
+        <div className={`text-muted transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}>
+          {Icons.ChevronDown}
+        </div>
+      </button>
+
+      {/* Expanded Details */}
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out border-t border-border/50 ${expanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className="p-6 bg-surface/30">
+          <h4 className="text-xs uppercase tracking-widest text-muted mb-4 font-body">Items</h4>
+          <div className="space-y-4">
+            {order.items.map((item) => (
+              <div key={`${order.id}-${item.productId}-${item.size}`} className="flex items-center gap-4">
+                <img
+                  src={item.productImage}
+                  alt={item.productName}
+                  className="w-16 h-20 object-cover rounded-lg border border-border bg-surface"
+                />
+                <div className="flex-grow min-w-0 font-body">
+                  <h3 className="text-sm font-medium text-ink truncate">{item.productName}</h3>
+                  <p className="text-sm text-muted">Size: {item.size}</p>
+                </div>
+                <div className="text-sm font-body text-right">
+                  <p className="text-muted">Qty: {item.quantity}</p>
+                  <p className="text-ink font-medium">${(item.productPrice * item.quantity).toFixed(2)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-8 pt-4 border-t border-border/50 grid grid-cols-1 md:grid-cols-2 gap-8 font-body text-sm">
+             <div>
+               <h4 className="text-xs uppercase tracking-widest text-muted mb-2">Shipping Address</h4>
+               <p className="text-ink leading-relaxed">
+                 {order.shippingAddress.name}<br/>
+                 {order.shippingAddress.address}<br/>
+                 {order.shippingAddress.city}, {order.shippingAddress.zipCode}<br/>
+                 {order.shippingAddress.country}
+               </p>
+             </div>
+             <div>
+               <h4 className="text-xs uppercase tracking-widest text-muted mb-2">Contact</h4>
+               <p className="text-ink leading-relaxed">
+                 {order.shippingAddress.email}<br/>
+                 {order.shippingAddress.phone}
+               </p>
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Account() {
   const { user, role, loading, signIn, signInWithGoogle, signUp, logout } = useAuth();
@@ -142,131 +243,83 @@ function Account() {
     const firstName = user.displayName?.split(' ')[0] || 'there';
     return (
       <Layout>
-        <div className="max-w-3xl mx-auto px-8 py-20">
+        <div className="max-w-4xl mx-auto px-8 py-20">
 
           {/* Header */}
           <div className="mb-12">
-            <p className="text-xs uppercase tracking-widest text-muted mb-3"
-              style={{ fontFamily: 'var(--font-body)' }}>
-              Account
-            </p>
-            <h1 className="text-4xl md:text-5xl text-ink"
-              style={{ fontFamily: 'var(--font-display)' }}>
-              Hello, <em style={{ color: '#6F6F6F' }}>{firstName}.</em>
+            <h1 className="text-4xl md:text-5xl text-ink font-display">
+              Welcome, <em className="text-muted italic">{firstName}.</em>
             </h1>
           </div>
 
-          {/* Profile card */}
-          <div className="card p-8 mb-10">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+          {/* Profile Section */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-12 border-b border-border mb-12">
+            <div className="flex items-center gap-6">
               <img
                 src={
                   user.photoURL ||
                   `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}`
                 }
                 alt={user.displayName || 'Profile'}
-                className="w-20 h-20 rounded-full border border-border object-cover"
+                className="w-16 h-16 rounded-full border border-border object-cover"
               />
-              <div className="flex-grow">
-                <h2 className="text-2xl text-ink mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+              <div>
+                <h2 className="text-xl text-ink mb-1 font-display">
                   {user.displayName || 'LuxeFashion Member'}
                 </h2>
-                <p className="text-sm text-muted mb-3" style={{ fontFamily: 'var(--font-body)' }}>
-                  {user.email}
-                </p>
-                <span
-                  className={`inline-block text-[11px] uppercase tracking-widest px-3 py-1 rounded-full ${
+                <div className="flex items-center gap-3 font-body">
+                  <p className="text-sm text-muted">{user.email}</p>
+                  <span className={`inline-block text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full ${
                     role === 'admin' ? 'bg-ink text-white' : 'bg-surface text-muted border border-border'
-                  }`}
-                  style={{ fontFamily: 'var(--font-body)' }}
-                >
-                  {role || 'customer'}
-                </span>
+                  }`}>
+                    {role || 'customer'}
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col gap-3 sm:items-end">
-                {role === 'admin' && (
-                  <Link to="/admin" className="btn-primary !py-2.5 !px-6 !text-sm">
-                    Manage Products
-                  </Link>
-                )}
-                <button onClick={handleLogout} className="btn-secondary !py-2.5 !px-6 !text-sm">
-                  Log Out
-                </button>
-              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              {role === 'admin' && (
+                <Link to="/admin" className="btn-primary py-2.5 px-6 text-sm">
+                  Admin Dashboard
+                </Link>
+              )}
+              <button onClick={handleLogout} className="btn-secondary py-2.5 px-6 text-sm">
+                Log Out
+              </button>
             </div>
           </div>
 
           {/* Order history */}
-          <div className="flex items-end justify-between mb-6">
-            <h2 className="text-3xl text-ink" style={{ fontFamily: 'var(--font-display)' }}>
+          <div className="flex items-end justify-between mb-8">
+            <h2 className="text-2xl text-ink font-display">
               Order History
             </h2>
             {orders && orders.length > 0 && (
-              <p className="text-xs uppercase tracking-widest text-muted"
-                style={{ fontFamily: 'var(--font-body)' }}>
+              <p className="text-xs uppercase tracking-widest text-muted font-body">
                 {orders.length} {orders.length === 1 ? 'order' : 'orders'}
               </p>
             )}
           </div>
 
           {ordersError ? (
-            <p className="text-sm text-red-600">{ordersError}</p>
+            <p className="text-sm text-[#B91C1C] bg-[#FEF2F2] border border-[#FECACA] rounded-xl px-4 py-3 font-body">{ordersError}</p>
           ) : orders === null ? (
             <div className="flex justify-center py-12">
               <div className="w-8 h-8 border-[1.5px] border-ink border-t-transparent rounded-full animate-spin" />
             </div>
           ) : orders.length === 0 ? (
-            <div className="card p-10 text-center">
-              <p className="text-muted text-sm mb-6" style={{ fontFamily: 'var(--font-body)' }}>
-                No orders yet — your purchases will appear here.
+            <div className="py-20 text-center flex flex-col items-center">
+              {Icons.Package}
+              <h3 className="text-2xl text-ink font-display mb-2">No orders yet</h3>
+              <p className="text-muted text-sm mb-8 font-body max-w-sm">
+                Your purchase history is currently empty. Explore our collection to find your next favorite piece.
               </p>
               <Link to="/shop" className="btn-primary">Start Shopping</Link>
             </div>
           ) : (
             <div className="space-y-4">
               {orders.map((order) => (
-                <div key={order.id} className="card p-6">
-                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <div>
-                      <p className="text-sm font-medium text-ink" style={{ fontFamily: 'var(--font-body)' }}>
-                        Order #{order.id?.slice(0, 8).toUpperCase()}
-                      </p>
-                      <p className="text-xs text-muted" style={{ fontFamily: 'var(--font-body)' }}>
-                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString(undefined, {
-                          year: 'numeric', month: 'long', day: 'numeric',
-                        }) : ''}
-                      </p>
-                    </div>
-                    <span
-                      className={`text-[11px] uppercase tracking-widest px-3 py-1 rounded-full capitalize ${
-                        STATUS_STYLES[order.status || 'pending'] || STATUS_STYLES.pending
-                      }`}
-                      style={{ fontFamily: 'var(--font-body)' }}
-                    >
-                      {order.status || 'pending'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 mb-4">
-                    {order.items.slice(0, 4).map((item) => (
-                      <img
-                        key={`${order.id}-${item.productId}-${item.size}`}
-                        src={item.productImage}
-                        alt={item.productName}
-                        title={`${item.productName} (${item.size}) × ${item.quantity}`}
-                        className="w-12 h-14 object-cover rounded-lg border border-border"
-                      />
-                    ))}
-                    {order.items.length > 4 && (
-                      <span className="text-xs text-muted">+{order.items.length - 4} more</span>
-                    )}
-                  </div>
-                  <div className="flex justify-between text-sm" style={{ fontFamily: 'var(--font-body)' }}>
-                    <span className="text-muted">
-                      {order.items.reduce((n, i) => n + i.quantity, 0)} items
-                    </span>
-                    <span className="text-ink font-medium">${order.totalAmount.toFixed(2)}</span>
-                  </div>
-                </div>
+                <OrderRow key={order.id} order={order} />
               ))}
             </div>
           )}
@@ -282,41 +335,36 @@ function Account() {
 
         {/* Header */}
         <div className="mb-10 text-center">
-          <p className="text-xs uppercase tracking-widest text-muted mb-3"
-            style={{ fontFamily: 'var(--font-body)' }}>
-            Account
-          </p>
-          <h1 className="text-4xl md:text-5xl text-ink mb-4"
-            style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-4xl md:text-5xl text-ink mb-4 font-display">
             {mode === 'login' ? (
-              <>Welcome <em style={{ color: '#6F6F6F' }}>back.</em></>
+              <>Welcome <em className="text-muted italic">back.</em></>
             ) : (
-              <>Join <em style={{ color: '#6F6F6F' }}>LuxeFashion.</em></>
+              <>Join <em className="text-muted italic">LuxeFashion.</em></>
             )}
           </h1>
-          <p className="text-muted text-sm leading-relaxed"
-            style={{ fontFamily: 'var(--font-body)' }}>
+          <p className="text-muted text-sm leading-relaxed font-body">
             {mode === 'login'
               ? 'Sign in to track orders and check out faster.'
               : 'Create an account to track orders and check out faster.'}
           </p>
         </div>
 
-        <div className="card p-8">
-          {/* Mode toggle — pill switch */}
-          <div className="flex bg-surface rounded-full p-1 mb-8">
+        <div className="border border-border bg-white rounded-3xl p-8 shadow-sm">
+          {/* Mode toggle — accessible tablist */}
+          <div className="flex bg-surface rounded-full p-1 mb-8" role="tablist" aria-label="Authentication mode">
             {(['login', 'register'] as const).map((m) => (
               <button
                 key={m}
                 type="button"
+                role="tab"
+                aria-selected={mode === m}
                 onClick={() => {
                   setMode(m);
                   setMessage(null);
                 }}
-                className={`flex-1 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                  mode === m ? 'bg-ink text-white' : 'text-muted hover:text-ink'
+                className={`flex-1 py-2.5 rounded-full text-sm font-medium transition-all duration-200 focus-visible:outline-2 focus-visible:outline-ink font-body ${
+                  mode === m ? 'bg-ink text-white shadow-sm' : 'text-muted hover:text-ink'
                 }`}
-                style={{ fontFamily: 'var(--font-body)' }}
               >
                 {m === 'login' ? 'Sign In' : 'Register'}
               </button>
@@ -330,6 +378,7 @@ function Account() {
                 <input
                   id="account-name"
                   type="text"
+                  autoComplete="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
@@ -343,6 +392,7 @@ function Account() {
               <input
                 id="account-email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -355,6 +405,7 @@ function Account() {
               <input
                 id="account-password"
                 type="password"
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -365,13 +416,13 @@ function Account() {
             </div>
 
             {message && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+              <p className="text-sm text-[#B91C1C] bg-[#FEF2F2] border border-[#FECACA] rounded-xl px-4 py-3 font-body">
                 {message}
               </p>
             )}
 
             <button type="submit" disabled={submitting}
-              className="btn-primary w-full !py-3.5 disabled:opacity-50">
+              className="btn-primary w-full py-4 disabled:opacity-50">
               {submitting
                 ? 'Please wait…'
                 : mode === 'login'
@@ -383,8 +434,7 @@ function Account() {
           {/* Divider */}
           <div className="flex items-center gap-4 my-6">
             <span className="flex-grow h-px bg-border" />
-            <span className="text-xs uppercase tracking-widest text-muted"
-              style={{ fontFamily: 'var(--font-body)' }}>
+            <span className="text-xs uppercase tracking-widest text-muted font-body">
               or
             </span>
             <span className="flex-grow h-px bg-border" />
@@ -395,7 +445,7 @@ function Account() {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={submitting}
-            className="btn-secondary w-full !py-3.5 disabled:opacity-50 flex items-center justify-center gap-3"
+            className="btn-secondary w-full py-3.5 disabled:opacity-50 flex items-center justify-center gap-3 font-body"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="#4285F4" d="M23.5 12.27c0-.85-.08-1.66-.22-2.45H12v4.64h6.45a5.52 5.52 0 0 1-2.39 3.62v3h3.87c2.26-2.09 3.57-5.16 3.57-8.81z"/>
@@ -413,27 +463,6 @@ function Account() {
           path="/account"
           noindex
         />
-
-        {/* Switch mode */}
-        <p className="text-center text-sm text-muted mt-8" style={{ fontFamily: 'var(--font-body)' }}>
-          {mode === 'login' ? (
-            <>
-              New to LuxeFashion?{' '}
-              <button type="button" onClick={() => { setMode('register'); setMessage(null); }}
-                className="text-ink underline underline-offset-4 hover:opacity-60 transition-opacity">
-                Create an account
-              </button>
-            </>
-          ) : (
-            <>
-              Already have an account?{' '}
-              <button type="button" onClick={() => { setMode('login'); setMessage(null); }}
-                className="text-ink underline underline-offset-4 hover:opacity-60 transition-opacity">
-                Sign in
-              </button>
-            </>
-          )}
-        </p>
       </div>
     </Layout>
   );
