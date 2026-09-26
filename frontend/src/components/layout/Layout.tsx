@@ -24,7 +24,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [shopDropdownOpen, setShopDropdownOpen] = useState(false);
-  const [mobileShopOpen, setMobileShopOpen] = useState(true);
+  const [mobileShopOpen, setMobileShopOpen] = useState(false);
 
   // Newsletter signup (footer) — posts to /api/newsletter and shows feedback.
   const [newsletterEmail, setNewsletterEmail] = useState('');
