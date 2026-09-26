@@ -4,7 +4,7 @@
 @keyframes fade-rise {
   from {
     opacity  : 0;
-    transform: translateY(20px);
+    transform: translateY(14px);
   }
   to {
     opacity  : 1;
@@ -12,16 +12,34 @@
   }
 }
 
+/* Snappy durations + minimal stagger so the hero feels instant on phones.
+   `forwards` fill-mode keeps the final state, while the elements default to
+   visible (opacity:1) in case the animation never fires (slow parse, etc.). */
 .animate-fade-rise {
-  animation: fade-rise 0.8s ease-out both;
+  animation: fade-rise 0.5s ease-out forwards;
 }
 
 .animate-fade-rise-delay {
-  animation: fade-rise 0.8s ease-out 0.2s both;
+  animation: fade-rise 0.5s ease-out 0.1s forwards;
+  /* Stay invisible only during the tiny delay, then animate in */
+  opacity: 0;
 }
 
 .animate-fade-rise-delay-2 {
-  animation: fade-rise 0.8s ease-out 0.4s both;
+  animation: fade-rise 0.5s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+/* Safety net: if animation hasn't run after 2s (e.g. reduced-motion, parse
+   failure, or JS-blocked stylesheets), force the content visible. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-rise,
+  .animate-fade-rise-delay,
+  .animate-fade-rise-delay-2 {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 /* fade-in — plain opacity swap (used by the product gallery angle switcher) */
@@ -31,7 +49,7 @@
 }
 
 .animate-fade-in {
-  animation: fade-in 0.35s ease-out both;
+  animation: fade-in 0.25s ease-out both;
 }
 
 /* ─── Hero — phone-web compatibility ──────────────────────────────────────── */
