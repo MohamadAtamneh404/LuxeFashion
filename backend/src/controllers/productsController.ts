@@ -25,8 +25,20 @@ const COLLECTION = 'products';
 // Get all products
 export const getAllProducts = async (req: Request, res: Response) => {
   try {
-    const snapshot = await db.collection(COLLECTION).orderBy('createdAt', 'desc').get();
+    let snapshot;
+    try {
+      snapshot = await db.collection(COLLECTION).orderBy('createdAt', 'desc').get();
+    } catch (orderErr) {
+      console.warn('orderBy("createdAt", "desc") failed, falling back to unordered get:', orderErr);
+      snapshot = await db.collection(COLLECTION).get();
+    }
     const products = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    // Sort in memory if createdAt exists
+    products.sort((a: any, b: any) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return timeB - timeA;
+    });
     res.json(products);
   } catch (error: any) {
     console.error('Error getting products:', error);
