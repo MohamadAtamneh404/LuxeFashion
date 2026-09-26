@@ -110,13 +110,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         ref={headerRef}
         className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-transparent transition-colors duration-300"
       >
-        <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between">
 
           {/* Logo */}
           <Link
             to="/"
-            className="text-2xl tracking-tight select-none text-ink"
-            style={{ fontFamily: 'var(--font-display)' }}
+            className="text-xl sm:text-2xl tracking-tight select-none text-ink font-display"
           >
             LuxeFashion<sup className="text-xs align-super">®</sup>
           </Link>
@@ -253,11 +252,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         {menuOpen && (
           <div className="md:hidden fixed inset-0 z-[60] bg-white flex flex-col justify-between overflow-y-auto animate-fade-in">
             {/* Mobile Header Bar */}
-            <div className="px-8 py-5 border-b border-border flex items-center justify-between">
+            <div className="px-6 sm:px-8 py-4 sm:py-5 border-b border-border flex items-center justify-between">
               <Link
                 to="/"
                 onClick={() => setMenuOpen(false)}
-                className="text-2xl tracking-tight select-none text-ink font-display"
+                className="text-xl sm:text-2xl tracking-tight select-none text-ink font-display"
               >
                 LuxeFashion<sup className="text-xs align-super">®</sup>
               </Link>
@@ -274,7 +273,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             </div>
 
             {/* Menu Links */}
-            <div className="px-8 py-8 flex-1">
+            <div className="px-6 sm:px-8 py-6 flex-1">
               {/* Shop Accordion / Dropdown */}
               <div className="mb-6">
                 <button

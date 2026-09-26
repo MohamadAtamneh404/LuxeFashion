@@ -60,7 +60,7 @@ const SearchBar = () => {
         }}
         placeholder="Search products…"
         aria-label="Search products"
-        className="w-36 md:w-56 border border-border rounded-full px-4 py-1.5 text-sm bg-white text-ink
+        className="w-28 sm:w-48 md:w-56 border border-border rounded-full px-3 sm:px-4 py-1.5 text-xs sm:text-sm bg-white text-ink
           placeholder:text-muted focus:outline-none focus:border-ink transition-colors"
       />
       <button
