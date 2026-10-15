@@ -1,0 +1,6 @@
+.back-to-top-float{position:fixed;right:max(1.25rem,env(safe-area-inset-right));bottom:max(1.25rem,env(safe-area-inset-bottom));z-index:55;display:grid;place-items:center;width:54px;height:54px;padding:0;border:1px solid rgba(255,255,255,.5);border-radius:50%;background:#20140e;color:#fbf8f1;box-shadow:0 8px 26px rgba(20,12,7,.2);cursor:pointer;touch-action:manipulation;transition:background .7s,box-shadow .7s;isolation:isolate}
+.back-to-top-float svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;transition:transform .7s cubic-bezier(.22,1,.36,1)}
+.back-to-top-float:hover{background:#69422b;box-shadow:0 10px 30px rgba(20,12,7,.28)}.back-to-top-float:hover svg{transform:translateY(-3px)}.back-to-top-float:focus-visible{outline:3px solid #98613d;outline-offset:5px}
+body.locked .back-to-top-float{visibility:hidden}
+@media(max-width:780px){.back-to-top-float{width:48px;height:48px;right:max(1rem,env(safe-area-inset-right));bottom:max(1rem,env(safe-area-inset-bottom))}}
+@media(prefers-reduced-motion:reduce){.back-to-top-float,.back-to-top-float svg{transition:none}.back-to-top-float:hover svg{transform:none}}

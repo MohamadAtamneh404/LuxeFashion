@@ -1,0 +1,8 @@
+/* One quiet character reveal; the footer itself never dissolves. */
+.footer,.footer .footer-content{opacity:1!important}
+.footer .footer-brand span{animation-name:brandTide,brandSheen;animation-duration:10s,24s;animation-timing-function:ease-in-out,linear;animation-iteration-count:infinite,infinite;animation-delay:calc(var(--letter)*-.42s),0s}
+.footer .footer-brand[data-character-reveal=ready] span{clip-path:inset(100% 0 0 0)}
+.footer .footer-brand[data-character-reveal=revealed] span{animation-name:brandTide,brandSheen,brandCharacterReveal;animation-duration:10s,24s,.65s;animation-timing-function:ease-in-out,linear,cubic-bezier(.22,1,.36,1);animation-iteration-count:infinite,infinite,1;animation-delay:calc(var(--letter)*-.42s),0s,calc(var(--letter)*.025s);animation-fill-mode:none,none,both}
+@keyframes brandTide{0%,100%{transform:translateY(0)}50%{transform:translateY(-.02em)}}
+@keyframes brandCharacterReveal{from{clip-path:inset(100% 0 0 0)}to{clip-path:inset(0)}}
+@media(prefers-reduced-motion:reduce){.footer .footer-brand[data-character-reveal] span{clip-path:none!important;animation:none!important;transform:none!important}}
