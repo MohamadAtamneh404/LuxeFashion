@@ -9,6 +9,8 @@
     window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
   });
   document.body.append(button);
+  function visibility(){button.classList.toggle('is-visible',window.scrollY>240)}
+  visibility();window.addEventListener('scroll',visibility,{passive:true});window.addEventListener('resize',visibility);window.addEventListener('pageshow',visibility);
   function label(){const ar=document.documentElement.lang==='ar';button.setAttribute('aria-label',ar?'العودة إلى الأعلى':'Back to top');button.title=ar?'العودة إلى الأعلى':'Back to top'}
   label();new MutationObserver(label).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
 })();
