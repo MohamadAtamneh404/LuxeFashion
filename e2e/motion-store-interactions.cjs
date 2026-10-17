@@ -6,6 +6,15 @@ const {chromium,expect}=require('@playwright/test');
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   try{
     await page.goto(base+'luxefashion-preview.html#/collections');
+    await page.evaluate(()=>document.fonts.ready);
+    for(const width of [800,1024,1440]){
+      await page.setViewportSize({width,height:1000});
+      for(const key of ['new','women','men','collections','editorial','about']){
+        const heading=await page.evaluate(key=>{openMega(key);const h=document.querySelector('#mega-title h2'),r=document.createRange();r.selectNodeContents(h);return {lines:r.getClientRects().length,textWidth:r.getBoundingClientRect().width,columnWidth:h.parentElement.clientWidth}},key);
+        expect(heading.lines).toBe(1);expect(heading.textWidth).toBeLessThanOrEqual(heading.columnWidth);
+      }
+    }
+    await page.evaluate(()=>closeMega());
     const button=page.locator('.footer-main-cta');
     const firstFrameMinimum=await button.evaluate(async el=>{
       el.dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));
