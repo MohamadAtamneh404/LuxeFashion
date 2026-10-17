@@ -1,0 +1,43 @@
+const {chromium,expect}=require('@playwright/test');
+(async()=>{
+  const browser=await chromium.launch({headless:true});
+  const base=process.env.RETAIL_QA_URL||'http://127.0.0.1:4178/motion-store/';
+  const page=await browser.newPage({viewport:{width:1440,height:1000}});
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  try{
+    await page.goto(base+'luxefashion-preview.html#/collections');
+    const button=page.locator('.footer-main-cta');
+    await button.hover();
+    await expect.poll(()=>button.evaluate(el=>Number(getComputedStyle(el).getPropertyValue('--interaction-scale')))).toBeGreaterThan(1.01);
+    await expect.poll(()=>button.locator('[data-gsap-arrow]').evaluate(el=>parseFloat(getComputedStyle(el).getPropertyValue('--interaction-arrow-x')))).toBeGreaterThan(3);
+    await page.mouse.move(0,0);
+    await expect.poll(()=>button.evaluate(el=>Number(getComputedStyle(el).getPropertyValue('--interaction-scale')))).toBe(1);
+    await page.keyboard.press('Tab');await button.focus();
+    await expect.poll(()=>button.evaluate(el=>Number(getComputedStyle(el).getPropertyValue('--interaction-scale')))).toBeGreaterThan(1.01);
+    await button.evaluate(el=>el.blur());
+    await page.evaluate(()=>nav('/new'));
+    const filters=page.locator('.catalog-filters summary');
+    await filters.click();
+    await expect(page.locator('.filter-fields')).toBeVisible();
+    await expect.poll(()=>page.locator('.filter-fields>.field').first().evaluate(el=>el.style.transform)).toBe('');
+    await page.getByLabel('Price range',{exact:true}).selectOption('under100');
+    await filters.hover();await expect(filters).toHaveAttribute('data-gsap-interaction','');
+    await page.emulateMedia({reducedMotion:'reduce'});
+    await filters.hover();
+    await expect.poll(()=>filters.evaluate(el=>getComputedStyle(el).scale)).toBe('1');
+    await page.emulateMedia({reducedMotion:'no-preference'});
+    await page.setViewportSize({width:390,height:844});
+    const menu=page.getByRole('button',{name:'Open menu',exact:true});
+    await menu.dispatchEvent('pointerdown',{pointerType:'touch',bubbles:true});
+    await expect.poll(()=>menu.evaluate(el=>Number(getComputedStyle(el).getPropertyValue('--interaction-scale')))).toBeLessThan(.98);
+    await menu.dispatchEvent('pointercancel',{pointerType:'touch',bubbles:true});
+    await expect.poll(()=>menu.evaluate(el=>Number(getComputedStyle(el).getPropertyValue('--interaction-scale')))).toBe(1);
+    await menu.click();await expect(page.locator('.mobile-panel')).toHaveClass(/open/);
+    await page.goto(base+'motion-proof.html');
+    const homeButton=page.locator('.primary-link').first();
+    await homeButton.hover();
+    await expect.poll(()=>homeButton.evaluate(el=>Number(getComputedStyle(el).getPropertyValue('--interaction-scale')))).toBeGreaterThan(1.01);
+    expect(errors).toEqual([]);
+    console.log('PASS: GSAP hover/arrow, return, keyboard focus, rebuilt controls, filters, reduced motion, touch cancellation and mobile navigation');
+  }finally{await browser.close()}
+})().catch(error=>{console.error(error);process.exitCode=1});

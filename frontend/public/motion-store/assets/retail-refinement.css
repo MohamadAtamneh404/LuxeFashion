@@ -88,3 +88,6 @@
   .page-opening-copy>.linkline {margin-top:1rem}
 }
 @media(prefers-reduced-motion:reduce) {.page-opening-media img{animation:none}.shop-toolbar input,.shop-toolbar select,.shop-toolbar summary{transition:none}}
+.button[data-gsap-interaction],.primary-link[data-gsap-interaction],button[data-gsap-interaction],summary[data-gsap-interaction],a[data-gsap-interaction]{scale:var(--interaction-scale,1)}
+[data-gsap-arrow]{translate:var(--interaction-arrow-x,0px) var(--interaction-arrow-y,0px);transition:none!important;transform:none!important}
+@media(prefers-reduced-motion:reduce){[data-gsap-interaction]{scale:1!important}[data-gsap-arrow]{translate:0!important}}
