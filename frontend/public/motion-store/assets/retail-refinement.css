@@ -24,3 +24,67 @@
 .catalog-filters{border-block:1px solid var(--border);padding:1rem 0;margin-top:1.5rem}.catalog-filters summary{font-weight:700;cursor:pointer;min-height:44px;display:flex;align-items:center;gap:1rem}.catalog-filters summary:after{content:"+"}.catalog-filters[open] summary:after{content:"−"}.filter-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;max-width:650px;padding:1rem 0}.filter-fields .field{min-width:0}.filter-fields select{width:100%;font-size:1rem}.results-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem}.results-heading .textbutton{min-height:44px;text-transform:none;letter-spacing:0}.filter-summary{font-size:.875rem;line-height:1.6;margin-bottom:1.5rem;color:var(--muted)}.catalog-filters summary::-webkit-details-marker{display:none}
 
 @media(max-width:780px){.retail-listing .category-pills{display:flex;flex-wrap:wrap;gap:.5rem}.retail-listing .category-pills a{flex:1 1 auto;justify-content:center;min-height:44px;padding:.5rem .6rem;font-size:.875rem}.retail-listing .toolbar{padding:0;border:0;border-radius:0;background:none;gap:.75rem;margin-bottom:1rem}.retail-listing .toolbar .field:last-child{display:flex;flex-direction:row;align-items:center;gap:1rem}.retail-listing .toolbar .field:last-child label{flex-shrink:0}.retail-listing .toolbar .field:last-child select{flex:1;min-width:0}.catalog-filters{padding:.5rem 0;margin-top:1rem}.retail-listing .page-intro{gap:.75rem}.retail-listing .result-count{margin:1rem 0}}
+
+/* A light retail toolbar: no enclosing form card or oversized dropdown. */
+.retail-listing .toolbar.shop-toolbar {
+  display:grid;
+  grid-template-columns:minmax(180px,1fr) auto auto;
+  align-items:center;
+  gap:1.5rem;
+  padding:.55rem 0;
+  margin:1rem 0;
+  border:0;
+  border-block:1px solid var(--border);
+  border-radius:0;
+  background:transparent;
+}
+.shop-toolbar .shop-search {position:relative;max-width:360px;display:block}
+.shop-toolbar .shop-search input {width:100%;min-height:48px;padding:.65rem .75rem .65rem 2rem;border:0;border-radius:12px;background:transparent;font-size:16px;transition:background .7s}
+.shop-toolbar .shop-search input:hover,.shop-toolbar .shop-search:focus-within input {background:var(--surface)}
+.shop-search-icon {position:absolute;inset-inline-start:.25rem;top:15px;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;pointer-events:none}
+.retail-listing .shop-toolbar .shop-sort {position:relative;display:flex;flex-direction:row;align-items:center;gap:.5rem;min-height:48px;padding-inline-end:1.25rem}
+.shop-toolbar .shop-sort label {white-space:nowrap;font-weight:650}
+.shop-toolbar .shop-sort select {appearance:none;width:145px;min-height:48px;padding:.65rem .25rem;border:0;border-radius:12px;background:transparent;font-size:16px;cursor:pointer;transition:background .7s}
+.shop-toolbar .shop-sort select:hover {background:var(--surface)}
+.sort-chevron {position:absolute;inset-inline-end:0;top:15px;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;pointer-events:none}
+.shop-toolbar .catalog-filters {position:relative;margin:0;padding:0;border:0}
+.shop-toolbar .catalog-filters summary {min-height:48px;gap:.5rem;padding:.5rem .65rem;border-radius:12px;list-style:none;transition:background .7s}
+.shop-toolbar .catalog-filters summary:hover,.shop-toolbar .catalog-filters[open] summary {background:var(--surface)}
+.shop-toolbar .catalog-filters summary::after {content:none}
+.filter-icon {width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.filter-badge {display:grid;place-items:center;min-width:23px;height:23px;border-radius:50%;background:var(--fg);color:var(--bg);font-size:.75rem}
+.shop-toolbar .filter-fields {position:absolute;z-index:25;inset-inline-end:0;top:calc(100% + .75rem);width:340px;max-width:calc(100vw - 2rem);padding:1.25rem;border:1px solid var(--border);border-radius:22px;background:var(--bg);box-shadow:0 15px 35px rgba(32,20,14,.12)}
+.shop-toolbar .filter-fields label {font-weight:650}
+.shop-toolbar .filter-fields select {background:var(--bg)}
+
+/* Destination-specific image openings, using actual catalog or editorial assets. */
+.page .page-intro.image-opening {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.95fr);align-items:center;gap:4vw;margin-bottom:2.5rem}
+.page-opening-copy {min-width:0}
+.image-opening h1 {font-size:clamp(3rem,6vw,6rem)!important;max-width:12ch;line-height:.98}
+.image-opening p {max-width:42ch;margin-top:1.25rem;line-height:1.5}
+.page-opening-copy>.linkline {margin-top:1.5rem}
+.page-opening-media {width:100%;min-width:0;height:330px;margin:0;overflow:hidden;border-radius:30px;background:var(--surface)}
+.page-opening-media img {display:block;width:100%;height:100%;object-fit:cover;object-position:center 40%;animation:opening-drift 22s ease-in-out infinite alternate}
+.page-opening-media.opening-pair {display:grid;grid-template-columns:1fr 1fr;gap:1rem;overflow:visible;background:transparent;border-radius:0;align-items:center}
+.opening-pair img {height:100%;min-width:0;border-radius:26px;overflow:hidden}
+.opening-pair img:nth-child(2) {height:82%;animation-delay:-9s}
+.profile-page:has(.image-opening),.service-page:has(.image-opening) {max-width:1280px}
+.page-opening-copy>div>p {margin-top:1.25rem}
+@keyframes opening-drift {from{transform:translateY(0)}to{transform:translateY(-5px)}}
+@media(max-width:780px) {
+  .retail-listing .toolbar.shop-toolbar {grid-template-columns:auto minmax(0,1fr);gap:.1rem .75rem;padding:.4rem 0}
+  .retail-listing .toolbar.shop-toolbar .shop-search {grid-column:1/-1;max-width:none;width:100%;border-bottom:1px solid var(--border);padding-bottom:.3rem}
+  .retail-listing .shop-toolbar .catalog-filters {grid-column:1;grid-row:2}
+  .retail-listing .shop-toolbar .shop-sort {grid-column:2;grid-row:2;justify-self:end;gap:.3rem}
+  .shop-toolbar .shop-sort select {width:130px;flex:none!important}
+  .shop-toolbar .catalog-filters summary {padding-inline:.25rem;font-size:.875rem}
+  .shop-toolbar .filter-fields {inset-inline-start:0;inset-inline-end:auto;padding:1rem;width:320px}
+  .page .page-intro.image-opening {grid-template-columns:minmax(0,1fr);gap:1.5rem;margin-bottom:1.5rem}
+  .image-opening h1 {font-size:clamp(2.8rem,10vw,4rem)!important;max-width:none}
+  .image-opening p {margin-top:.85rem}
+  .page-opening-media {height:210px;border-radius:24px}
+  .page-opening-media.opening-pair {gap:.75rem}
+  .opening-pair img {border-radius:22px}
+  .page-opening-copy>.linkline {margin-top:1rem}
+}
+@media(prefers-reduced-motion:reduce) {.page-opening-media img{animation:none}.shop-toolbar input,.shop-toolbar select,.shop-toolbar summary{transition:none}}

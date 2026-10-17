@@ -35,7 +35,7 @@
   const count = n => state.lang==='ar' ? `${n} قطع` : `${n} ${n===1?'piece':'pieces'}`;
   const activeQuery=()=>new URLSearchParams(location.hash.split('?')[1]||'');
   const routeFor=(kind,section=state.section)=>{const q=new URLSearchParams();if(section)q.set('section',section);if(state.query)q.set('q',state.query);if(state.sizeFilter)q.set('size',state.sizeFilter);if(state.priceFilter)q.set('price',state.priceFilter);if(state.sort!=='featured')q.set('sort',state.sort);return '#/'+kind+(q.size?'?'+q:'')};
-  window.retailFilter=function(kind,key,value){state[key]=value;renderListingResults(kind);document.querySelector('.catalog-filters')?.setAttribute('open','')};
+  window.retailFilter=function(kind,key,value){state.retailFiltersOpen=true;state[key]=value;renderListingResults(kind);document.querySelector('.catalog-filters')?.setAttribute('open','')};
   window.retailResetFilters=function(kind){state.sizeFilter='';state.priceFilter='';state.query='';state.section='';location.hash=routeFor(kind,'');if(state.route===location.hash.slice(1))render()};
   const empty = (title,copy,href,label) => `<div class="empty"><h2>${esc(title)}</h2><p>${esc(copy)}</p><a class="button" href="${href}">${esc(label)} ${arrow}</a></div>`;
   const oldListing=listing;
@@ -91,8 +91,43 @@
   let purchaseObserver;
   function syncEditorialFilm(){const film=document.querySelector('.editorial-film video');if(!film)return;if(document.hidden||matchMedia('(prefers-reduced-motion:reduce)').matches)film.pause();else film.play().catch(()=>{})}
   document.addEventListener('visibilitychange',syncEditorialFilm);
+  function openingForPage(){
+    const path=location.hash.slice(1).split('?')[0];
+    const openings={
+      '/new':[['dress.jpg','Red dress from the latest edit'],['coat.jpg','Terracotta jacket from the latest edit']],
+      '/women':[['trench.jpg','Camel belted coat from the women’s edit'],['sweater_alt.jpg','Ivory fringed poncho from the women’s edit']],
+      '/men':[['shirt.jpg','Blue printed shirt from the men’s edit'],['coat.jpg','Terracotta jacket from the men’s edit']],
+      '/collections':[['trench.jpg','Soft structure collection'],['dress.jpg','Color in motion collection']],
+      '/editorial':[['runway.webp','Runway inspiration for the editorial stories']],
+      '/about':[['dress.jpg','Red dress from the catalog'],['shirt.jpg','Blue printed shirt from the catalog']],
+      '/wishlist':[['trench.jpg','Camel coat from the catalog'],['dress.jpg','Red dress from the catalog']],
+      '/account':[['shirt.jpg','Blue printed shirt from the catalog']],
+      '/info':[['trench.jpg','Camel coat from the catalog']]
+    };
+    const images=openings[path];if(!images||path==='/collections'&&activeQuery().get('edit'))return;
+    const main=document.getElementById('main');if(!main||main.querySelector('.image-opening'))return;
+    let intro=main.querySelector(':scope>.page-intro');
+    if(!intro){const heading=main.querySelector(':scope>h1');if(!heading)return;intro=document.createElement('div');intro.className='page-intro';heading.before(intro);const copy=document.createElement('div');intro.append(copy);copy.append(heading);const paragraph=intro.nextElementSibling;if(paragraph?.matches('p'))copy.append(paragraph)}
+    intro.classList.add('image-opening');const copy=document.createElement('div');copy.className='page-opening-copy';while(intro.firstChild)copy.append(intro.firstChild);intro.append(copy);
+    const media=document.createElement('figure');media.className='page-opening-media'+(images.length>1?' opening-pair':'');
+    media.innerHTML=images.map(([file,alt])=>`<img src="${asset(file)}" alt="${esc(alt)}" width="1000" height="1500" decoding="async" fetchpriority="high">`).join('');intro.append(media);
+    if(path==='/about')main.querySelector('.about-pair')?.remove();
+  }
+  function compactToolbar(){
+    const bar=document.querySelector('.retail-listing .toolbar');if(!bar)return;
+    bar.classList.add('shop-toolbar');bar.setAttribute('aria-label','Product search, filters and sorting');
+    const search=bar.querySelector(':scope>.field:first-child');search.classList.add('shop-search');search.querySelector('label').classList.add('sr-only');search.querySelector('input').placeholder='Search this edit';
+    if(!search.querySelector('.shop-search-icon'))search.insertAdjacentHTML('afterbegin','<svg class="shop-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>');
+    const sort=bar.querySelector(':scope>.field:last-child');sort.classList.add('shop-sort');const select=sort.querySelector('select');select.querySelector('[value="featured"]').textContent='Featured';select.querySelector('[value="low"]').textContent='Lowest price';select.querySelector('[value="high"]').textContent='Highest price';select.querySelector('[value="name"]').textContent='Name: A–Z';
+    if(!sort.querySelector('.sort-chevron'))sort.insertAdjacentHTML('beforeend','<svg class="sort-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>');
+    const filters=document.querySelector('.catalog-filters');if(filters){bar.insertBefore(filters,sort);filters.open=!!state.retailFiltersOpen;filters.addEventListener('toggle',()=>{if(filters.isConnected)state.retailFiltersOpen=filters.open});const summary=filters.querySelector('summary'),n=[state.section,state.sizeFilter,state.priceFilter,state.query].filter(Boolean).length;summary.innerHTML=`<svg class="filter-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M9 4v6M15 14v6"/></svg><span>Filters</span>${n?`<b class="filter-badge">${n}</b>`:''}`;summary.setAttribute('aria-label',n?`Filters, ${n} active`:'Filters')}
+  }
+  document.addEventListener('pointerdown',event=>{if(!event.target.closest('.catalog-filters')){state.retailFiltersOpen=false;document.querySelector('.catalog-filters[open]')?.removeAttribute('open')}});
+  document.addEventListener('focusin',event=>{if(!event.target.closest('.catalog-filters')){state.retailFiltersOpen=false;document.querySelector('.catalog-filters[open]')?.removeAttribute('open')}});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'){const filters=document.querySelector('.catalog-filters[open]');if(filters){const inside=filters.contains(document.activeElement);state.retailFiltersOpen=false;filters.open=false;if(inside)filters.querySelector('summary').focus()}}});
   function finishRetail(){
     syncEditorialFilm();
+    openingForPage();compactToolbar();
     purchaseObserver?.disconnect();document.body.classList.toggle('has-mobile-purchase',!!document.querySelector('.mobile-purchase'));
     const sticky=document.querySelector('.mobile-purchase'),controls=document.querySelector('.retail-product-buy .detail-actions');if(sticky&&controls){purchaseObserver=new IntersectionObserver(entries=>sticky.classList.toggle('is-visible',!entries[0].isIntersecting),{threshold:.5});purchaseObserver.observe(controls)}
     document.querySelectorAll('.page-intro .eyebrow,.article-hero small').forEach(e=>e.remove());
@@ -101,6 +136,6 @@
     document.querySelectorAll('.curated-edit,.retail-product-media img,.story-shop').forEach(e=>e.classList.add('is-visible'));
   }
   const priorRender=render;render=function(){const q=activeQuery();state.sizeFilter=q.get('size')||'';state.priceFilter=['under100','100to199','200plus'].includes(q.get('price'))?q.get('price'):'';if(q.get('section')==='denim'){location.replace('#/men?section=essentials');return}priorRender();finishRetail()};
-  const priorResults=renderListingResults;renderListingResults=function(kind){const size=state.sizeFilter,price=state.priceFilter;priorResults(kind);const q=new URLSearchParams(location.hash.split('?')[1]||'');if(size)q.set('size',size);if(price)q.set('price',price);const route='/'+kind+(q.size?'?'+q:'');history.replaceState(null,'',location.pathname+location.search+'#'+route);state.route=route;finishRetail()};
+  const priorResults=renderListingResults;renderListingResults=function(kind){const size=state.sizeFilter,price=state.priceFilter,focusId=document.activeElement?.id;priorResults(kind);const q=new URLSearchParams(location.hash.split('?')[1]||'');if(size)q.set('size',size);if(price)q.set('price',price);const route='/'+kind+(q.size?'?'+q:'');history.replaceState(null,'',location.pathname+location.search+'#'+route);state.route=route;finishRetail();if(['filter-size','filter-price','catalog-sort'].includes(focusId))document.getElementById(focusId)?.focus({preventScroll:true})};
   render();
 })();

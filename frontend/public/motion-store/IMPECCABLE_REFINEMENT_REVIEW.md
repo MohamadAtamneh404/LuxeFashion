@@ -30,3 +30,11 @@ The critique snapshot is retained open because the genuine product-evidence prio
 ## Intentional constraints
 
 No motion pause option and no pinch zoom remain as explicitly requested. All-page footer structure is preserved. Animation is not used to change product evidence or invent alternate garment views.
+
+## Image openings and compact catalog controls
+
+Following feedback on the large form-style toolbar, search/filter/sort now share a slim retail row with an anchored filter dropdown. The dropdown closes on outside pointer/focus or Escape, preserves filter selections and restores focus after updates. No enclosing rounded form panel remains.
+
+Shop, collection index, journal, about, wishlist, profile and customer-care pages have destination-specific image openings. Collection-detail and article pages keep their existing image openings; product/bag/checkout remain focused on their own merchandise. Phone openings use a shorter 210px media composition. Catalog openings use actual catalog photographs; journal imagery is editorial inspiration. Reduced-motion preference disables the gentle image drift.
+
+Updated end-to-end checks pass combined filters/sorting and persistence, hero image loading, keyboard dismissal behavior, and no page overflow across the expanded route set at320/390/768px. Desktop and mobile catalog captures were reviewed together.
