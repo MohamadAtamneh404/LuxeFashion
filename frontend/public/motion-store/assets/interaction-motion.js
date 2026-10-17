@@ -2,28 +2,37 @@
 (() => {
   if (!window.gsap) return;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const controls = 'button:not(:disabled),a.button,a.primary-link,a.line-link,a.linkline,.category-pills a,.primary-nav a,.nav-link,.mega-links a,.mega-col a,summary';
+  const controls = 'button:not(:disabled),a.button,a.primary-link,a.line-link,a.linkline,.category-pills a,.primary-nav a,.header-utils a,.utilities a,.nav-link,.mega-links a,.mega-col a,.mobile-nav a,.mobile-panel a,summary';
   const states = new WeakMap();
   const pressed = new Set();
   function control(event) { return event.target.closest?.(controls); }
   function feedback(element, changes) {
-    if (!element) return;
+    if (!element || element.matches(':disabled,[aria-disabled="true"]')) return;
     const state = Object.assign(states.get(element) || {hover:false, pressed:false}, changes);
     states.set(element, state);
-    element.dataset.gsapInteraction = '';
+    if (!element.hasAttribute('data-gsap-interaction')) {
+      // CSS var() fallbacks are not the starting values GSAP reads.
+      gsap.set(element,{'--interaction-scale':1,'--interaction-fill':0});
+      element.dataset.gsapInteraction = element.matches('.primary-link,.button.dark,.purchase-controls .button,.mobile-purchase .button') ? 'primary' : 'supporting';
+    }
+    const primary = element.dataset.gsapInteraction === 'primary';
     const engaged = state.hover || element.matches(':focus-visible');
     const spatial = !reduced.matches;
-    gsap.to(element, {
-      '--interaction-scale': spatial ? (state.pressed ? .97 : engaged ? 1.015 : 1) : 1,
-      duration: state.pressed ? .12 : .65, ease:'power3.out', overwrite:'auto'
+    state.tween?.kill();
+    state.tween = gsap.to(element, {
+      '--interaction-scale': spatial ? (state.pressed ? (primary ? .97 : .985) : engaged && primary ? 1.015 : 1) : 1,
+      '--interaction-fill': primary && engaged ? 1 : 0,
+      duration: state.pressed ? .12 : !engaged ? .22 : primary ? .7 : .25, ease:'power3.out', overwrite:'auto'
     });
     const arrow = element.querySelector('.arrow,.retail-arrow,.back-to-top-float svg,.sort-chevron');
     if (arrow) {
+      if (!arrow.hasAttribute('data-gsap-arrow')) gsap.set(arrow,{'--interaction-arrow-x':'0px','--interaction-arrow-y':'0px'});
       arrow.dataset.gsapArrow = '';
-      gsap.to(arrow, {
-        '--interaction-arrow-x': spatial && engaged && !element.matches('.back-to-top-float') ? '4px' : '0px',
-        '--interaction-arrow-y': spatial && engaged ? '-3px' : '0px',
-        duration:.75, ease:'power3.out', overwrite:'auto'
+      state.arrowTween?.kill();
+      state.arrowTween = gsap.to(arrow, {
+        '--interaction-arrow-x': spatial && engaged && !element.matches('.back-to-top-float') ? (primary ? '4px' : '2px') : '0px',
+        '--interaction-arrow-y': spatial && engaged ? (primary ? '-3px' : '-1px') : '0px',
+        duration: engaged ? (primary ? .75 : .3) : .22, ease:'power3.out', overwrite:'auto'
       });
     }
   }
@@ -58,20 +67,40 @@
 
   function reveal(panel) {
     if (reduced.matches) return;
-    const items = panel.querySelectorAll('.mega-links a,.mega-col a,.mobile-nav a,.mobile-panel a,.filter-fields>.field');
-    gsap.fromTo(items,{y:6,opacity:.8},{y:0,opacity:1,duration:.4,stagger:.035,ease:'power2.out',overwrite:true,clearProps:'transform,opacity'});
+    const items = [...panel.querySelectorAll('.mega-links a,.mega-col a,.mobile-nav a,.mobile-panel a,.mobile-nav summary,.mobile-panel summary,.mobile-util button,.filter-fields>.field')].filter(item => {
+      const closed = item.closest('details:not([open])');
+      return item.getClientRects().length && (!closed || item === closed.querySelector(':scope>summary'));
+    });
+    gsap.fromTo(items,{y:6,opacity:.8},{y:0,opacity:1,duration:.35,stagger:Math.min(.035,.15/Math.max(1,items.length-1)),ease:'power2.out',overwrite:true,clearProps:'transform,opacity'});
   }
   document.addEventListener('toggle',event => {
-    if (event.target.matches?.('details.catalog-filters') && event.target.open) reveal(event.target);
-  },true);
-  const panelObserver = new MutationObserver(records => {
-    for (const {target,oldValue} of records) {
-      if (target.classList.contains('open') && !(oldValue || '').split(/\s+/).includes('open')) reveal(target);
+    const details = event.target;
+    if (!details.matches?.('details.catalog-filters,.mobile-nav details,.mobile-panel details')) return;
+    if (details.open) reveal(details);
+    else {
+      const items = details.querySelectorAll('a,.filter-fields>.field');
+      gsap.killTweensOf(items);
+      gsap.set(items,{clearProps:'transform,opacity'});
     }
+  },true);
+  reduced.addEventListener('change',() => {
+    if (!reduced.matches) return;
+    const items = document.querySelectorAll('.mega-links a,.mega-col a,.mobile-nav a,.mobile-panel a,.mobile-nav summary,.mobile-panel summary,.mobile-util button,.filter-fields>.field');
+    gsap.killTweensOf(items);
+    gsap.set(items,{clearProps:'transform,opacity'});
+  });
+  const panelObserver = new MutationObserver(records => {
+    const panels = new Set();
+    for (const {target,type,oldValue} of records) {
+      const panel = target.closest('.mega,.mega-panel,.mobile-nav,.mobile-panel');
+      if (panel?.classList.contains('open') && (type === 'childList' || (target === panel && !(oldValue || '').split(/\s+/).includes('open')))) panels.add(panel);
+    }
+    panels.forEach(reveal);
   });
   function watchMenus() {
     document.querySelectorAll('.mega,.mega-panel,.mobile-nav,.mobile-panel').forEach(panel => {
-      panelObserver.observe(panel,{attributes:true,attributeFilter:['class'],attributeOldValue:true});
+      panelObserver.observe(panel,{attributes:true,attributeFilter:['class'],attributeOldValue:true,childList:true,subtree:true});
+      if (panel.classList.contains('open')) reveal(panel);
     });
   }
   watchMenus();

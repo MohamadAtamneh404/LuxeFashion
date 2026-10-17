@@ -6,7 +6,8 @@
     document.querySelector('.mobile-nav.open')?.classList.remove('open');
     document.querySelector('.mobile-panel.open')?.classList.remove('open');
     document.querySelectorAll('[aria-controls="mobile-panel"],[aria-controls="mobile-nav"]').forEach(toggle=>toggle.setAttribute('aria-expanded','false'));
-    window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
+    if(window.luxeScroll)window.luxeScroll.scrollTo(0,{duration:1});
+    else window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
   });
   document.body.append(button);
   function visibility(){button.classList.toggle('is-visible',window.scrollY>240)}
