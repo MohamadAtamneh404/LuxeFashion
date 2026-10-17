@@ -3,12 +3,12 @@
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   const text=(en,ar)=>state.lang==='ar'?ar:en;
   const dimensions={'campaign.webp':[2560,1440],'runway.webp':[2560,1440],'atrium.webp':[1400,1750],'atelier.webp':[1400,1750],'dress.jpg':[1000,1201],'trench.jpg':[1000,1500],'coat.jpg':[1000,1333],'trousers.jpg':[1000,1500],'shirt.jpg':[1000,1499],'sweater_alt.jpg':[1000,1435],'tee.jpg':[1000,1000],'jeans.jpg':[1000,800],'coat_alt.jpg':[1000,1500]};
-  const departments={new:[['dresses','dress.jpg'],['outerwear','trench.jpg'],['shirts','shirt.jpg']],women:[['dresses','dress.jpg'],['outerwear','trench.jpg'],['tops','sweater_alt.jpg'],['trousers','trousers.jpg']],men:[['shirts','shirt.jpg'],['layers','coat.jpg'],['denim','jeans.jpg'],['essentials','tee.jpg']]};
+  const departments={new:[['dresses','dress.jpg'],['outerwear','trench.jpg'],['shirts','shirt.jpg']],women:[['dresses','dress.jpg'],['outerwear','trench.jpg'],['tops','sweater_alt.jpg'],['trousers','trousers.jpg']],men:[['shirts','shirt.jpg'],['layers','coat.jpg'],['essentials','tee.jpg']]};
   const sectionLabel=key=>SECTION_LABELS[key]?.[state.lang]||key;
   const departmentItems=key=>(departments[key]||[]).map(([section,image])=>({label:sectionLabel(section),href:`#/${key}?section=${section}`,image}));
   function menuItems(key){
     if(departments[key])return departmentItems(key);
-    if(key==='collections')return [{label:t('women'),href:'#/women',image:'campaign.webp'},{label:t('men'),href:'#/men',image:'coat.jpg'},{label:t('collection1'),href:'#/collections',image:'atrium.webp'}];
+    if(key==='collections')return [{label:'Soft structure',href:'#/collections?edit=soft-structure',image:'trench.jpg'},{label:'Color in motion',href:'#/collections?edit=color-in-motion',image:'dress.jpg'},{label:'Everyday layers',href:'#/collections?edit=everyday-layers',image:'shirt.jpg'}];
     if(key==='editorial')return S.map(s=>({label:state.lang==='ar'?s.ar:s.title,href:`#/story/${s.id}`,image:s.image}));
     return [{label:t('about'),href:'#/about',image:'atelier.webp'},{label:t('contact'),href:'#/info',image:'atrium.webp'},{label:t('privacy'),href:'#/privacy',image:'campaign.webp'}];
   }
@@ -63,7 +63,7 @@
     observer.observe(document.querySelector('.footer'));
     document.querySelectorAll('.product-card,.story-card,.category,.article-body,.related-pieces>.section-head').forEach(element=>{if(!reduced.matches&&routeChanged)element.classList.add('store-reveal');else element.classList.add('is-visible');observer.observe(element)});
     document.querySelectorAll('.catalog-cover>img,.article-hero>img,.gallery-main img').forEach(element=>{element.classList.add('store-ambient');observer.observe(element)});
-    if(routeChanged&&!reduced.matches&&window.gsap){pageContext=gsap.context(()=>{gsap.fromTo(main.querySelectorAll(':scope>.catalog-cover,:scope>.page-intro,:scope>.detail-layout,:scope>.article-hero,:scope>.breadcrumbs,:scope>h1'),{opacity:0},{opacity:1,duration:1.2,ease:'sine.out',stagger:.08,clearProps:'opacity'})},main)}
+    if(routeChanged&&!reduced.matches&&window.gsap){pageContext=gsap.context(()=>{gsap.fromTo(main.querySelectorAll(':scope>.catalog-cover,:scope>.page-intro,:scope>.detail-layout,:scope>.article-hero,:scope>.breadcrumbs,:scope>h1'),{opacity:.85},{opacity:1,duration:.6,ease:'sine.out',stagger:.04,clearProps:'opacity'})},main)}
     if(location.hash.startsWith('#/account'))main.querySelectorAll('input').forEach(input=>{input.name=input.id.replace('account-','')});
   }
   const baseRender=render;
